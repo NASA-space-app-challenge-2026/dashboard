@@ -8,7 +8,7 @@ const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", searchLabel: "검색", searchPh: "팀 또는 지역 검색", searchRegions: "지역", searchTeams: "팀", searchEmpty: "검색 결과가 없습니다.", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
+    langToggle: "EN", searchLabel: "검색", searchPh: "미션, 팀 또는 지역 검색", searchMissions: "미션", searchRegions: "지역", searchTeams: "팀", searchEmpty: "검색 결과가 없습니다.", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
     aboutTitle: "NASA Space Apps Challenge 소개",
     aboutBody: [
       "NASA Space Apps Challenge는 NASA가 매년 개최하는 세계 최대 규모의 국제 해커톤입니다. 누구나 팀을 이뤄 참가할 수 있으며, NASA가 공개한 우주·지구 관측 데이터를 활용해 실제 문제를 해결하는 프로젝트를 만듭니다.",
@@ -42,7 +42,7 @@ const STRINGS = {
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", searchLabel: "Search", searchPh: "Search teams or regions", searchRegions: "Regions", searchTeams: "Teams", searchEmpty: "No results.", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
+    langToggle: "한국어", searchLabel: "Search", searchPh: "Search missions, teams or regions", searchMissions: "Missions", searchRegions: "Regions", searchTeams: "Teams", searchEmpty: "No results.", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
     aboutTitle: "About NASA Space Apps Challenge",
     aboutBody: [
       "The NASA Space Apps Challenge is the largest annual international hackathon, hosted by NASA. Anyone can join a team and build projects that tackle real-world problems using the space and Earth observation data NASA makes openly available.",
@@ -425,10 +425,12 @@ $("lang").addEventListener("click", () => {
   mounted = null;  // 머리글이 캐시되어 있으므로 다시 그린다
   route();
 });
-// 전역 검색 (Cmd/Ctrl+K): 지역·팀 이름으로 찾아 해당 페이지로 이동
-const SearchKind = Object.freeze({ REGION: "region", TEAM: "team" });
-const SEARCH_MAX = Object.freeze({ [SearchKind.REGION]: 6, [SearchKind.TEAM]: 8 });
+// 전역 검색 (Cmd/Ctrl+K): 미션·지역·팀 이름으로 찾아 해당 페이지로 이동
+const SearchKind = Object.freeze({ MISSION: "mission", REGION: "region", TEAM: "team" });
+const SEARCH_MAX = Object.freeze({ [SearchKind.MISSION]: 5, [SearchKind.REGION]: 6, [SearchKind.TEAM]: 8 });
 const SEARCH_INDEX = [
+  // 미션 제목은 언어별로 다르므로 표시명은 현재 언어로 읽고, 검색 키에는 두 언어 제목을 모두 넣는다
+  ...D.challenges.map(c => ({ kind: SearchKind.MISSION, get name() { return mText(c, "title"); }, sub: "", key: Object.values(Lang).map(l => MISSION_TEXT[l][c.slug]?.title || "").concat(c.title).join(" ").toLowerCase(), href: `/mission/${encodeURIComponent(c.slug)}` })),
   ...REG.map(r => ({ kind: SearchKind.REGION, name: r.name, sub: r.country, key: `${r.name} ${r.country}`.toLowerCase(), href: `/regions/${encodeURIComponent(r.slug)}` })),
   ...T.map(t => ({ kind: SearchKind.TEAM, name: t.name, sub: t.region, key: t.name.toLowerCase(), href: teamHref(t), team: t }))
 ];
@@ -440,7 +442,7 @@ const gsMark = i => { const items = gsItems(); if (!items.length) return; gsActi
 function gsRender() {
   const q = $("gs-q").value.trim().toLowerCase();
   if (!q) { $("gs-list").innerHTML = ""; return; }
-  const groups = [[SearchKind.REGION, L.searchRegions], [SearchKind.TEAM, L.searchTeams]].map(([kind, title]) => {
+  const groups = [[SearchKind.MISSION, L.searchMissions], [SearchKind.REGION, L.searchRegions], [SearchKind.TEAM, L.searchTeams]].map(([kind, title]) => {
     const hits = SEARCH_INDEX.filter(x => x.kind === kind && x.key.includes(q));
     const starts = hits.filter(x => x.name.toLowerCase().startsWith(q));
     return [title, [...starts, ...hits.filter(x => !starts.includes(x))].slice(0, SEARCH_MAX[kind])];
