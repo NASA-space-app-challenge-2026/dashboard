@@ -89,7 +89,7 @@ summary .badge+.badge{margin-left:0}
   background:hsl(var(--muted));color:hsl(var(--muted-foreground));border:1px solid hsl(var(--border))}
 .tw{border:1px solid hsl(var(--border));border-top:0;border-radius:0 0 calc(var(--radius) + 2px) calc(var(--radius) + 2px);overflow-x:auto}
 .tw.anim{overflow:hidden}
-.tbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 14px}
+.tbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 14px 16px}
 .tbar .mq{flex:0 1 280px;min-width:160px;height:38px}
 .tbar .pg{margin-left:auto}
 .tbar .pager{margin:0}
@@ -173,16 +173,13 @@ footer.foot .lic{margin-top:10px;font-size:14px}footer.foot .lic a{text-decorati
 
 /* 넓은 화면: 목록 안에서 스크롤할 때 페이저와 컬럼 헤더를 상단 헤더 아래에 고정한다.
    (overflow 스크롤 컨테이너가 있으면 sticky 가 막히므로 좁은 화면에서만 가로 스크롤을 둔다) */
-:root{--hdr:60px;--pager-h:54px;--list-pager-h:62px;--list-head-h:52px;--sticky-bg:hsl(240 10% 6%)}
+:root{--hdr:60px;--list-pager-h:62px;--list-head-h:52px;--sticky-bg:hsl(240 10% 6%)}
 .tscroll{overflow-x:auto}
 @media(min-width:1101px){
   .tscroll{overflow:visible}
   .list-head{position:sticky;top:var(--hdr);z-index:6;height:var(--list-head-h);box-sizing:border-box;padding-top:0;align-items:center;background:var(--sticky-bg)}
-  #list>.pager,#regtable>.pager{position:sticky;top:var(--hdr);z-index:5;margin:0;padding:8px 0 16px;height:var(--list-pager-h);box-sizing:border-box;background:var(--sticky-bg)}
-  #list th,#regtable th{position:sticky;top:calc(var(--hdr) + var(--list-pager-h));z-index:4;background:var(--sticky-bg);box-shadow:inset 0 -1px hsl(var(--border))}
-  /* 챌린지 팀 목록은 제목줄(.list-head)까지 함께 고정하므로 그 높이만큼 더 내린다 */
-  #list>.pager{top:calc(var(--hdr) + var(--list-head-h))}
-  #list th{top:calc(var(--hdr) + var(--list-head-h) + var(--list-pager-h))}
+  #list>.pager,#regtable>.pager{position:sticky;top:calc(var(--hdr) + var(--list-head-h));z-index:5;margin:0;padding:8px 0 16px;height:var(--list-pager-h);box-sizing:border-box;background:var(--sticky-bg)}
+  #list th,#regtable th{position:sticky;top:calc(var(--hdr) + var(--list-head-h) + var(--list-pager-h));z-index:4;background:var(--sticky-bg);box-shadow:inset 0 -1px hsl(var(--border))}
 }
 
 /* 지역 페이지: 스크롤할 때 현재 챌린지 제목(summary)을 상단 헤더 아래에 고정한다 (details 가 끝나면 함께 밀려난다) */
@@ -190,9 +187,9 @@ details{scroll-margin-top:calc(var(--hdr) + 8px)}
 @media(min-width:1101px){
   details>summary{position:sticky;top:var(--hdr);z-index:6;background:var(--sticky-bg)}
   details:not(.shut) .tw:not(.anim){overflow:visible}  /* overflow 스크롤 컨테이너가 있으면 sticky 가 막힌다 */
-  .tw>.tbar{position:sticky;top:calc(var(--hdr) + var(--sum-h,0px));z-index:5;height:var(--pager-h);box-sizing:border-box;background:var(--sticky-bg)}
+  .tw>.tbar{position:sticky;top:calc(var(--hdr) + var(--sum-h,0px));z-index:5;height:var(--list-pager-h);box-sizing:border-box;background:var(--sticky-bg)}
   .tw table th{position:sticky;top:calc(var(--hdr) + var(--sum-h,0px));z-index:4;background:var(--sticky-bg);box-shadow:inset 0 -1px hsl(var(--border))}
-  .tw>.tbar~table th{position:sticky;top:calc(var(--hdr) + var(--sum-h,0px) + var(--pager-h));z-index:4;background:var(--sticky-bg);box-shadow:inset 0 -1px hsl(var(--border))}
+  .tw>.tbar~table th{position:sticky;top:calc(var(--hdr) + var(--sum-h,0px) + var(--list-pager-h));z-index:4;background:var(--sticky-bg);box-shadow:inset 0 -1px hsl(var(--border))}
 }
 
 /* page-change animation: tbody is re-created on every pagination/sort/search */

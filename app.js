@@ -135,6 +135,8 @@ const blankRows = (shown, cols) => `<tr class="blank">${`<td></td>`.repeat(cols)
 const pagerButtons = (page, pages) => `<button data-p="${page - 1}" ${page === 1 ? "disabled" : ""}>${L.prev}</button>
     ${pageNums(page, pages).map(k => k === null ? `<span class="gap">…</span>` : `<button data-p="${k}" ${k === page ? "aria-current=page" : ""}>${k}</button>`).join("")}
     <button data-p="${page + 1}" ${page === pages ? "disabled" : ""}>${L.next}</button>`;
+// 검색·페이지 이동 때 목록 맨 위가 화면 위로 지나가 있으면 부드럽게 스크롤해 올린다 (첫 줄이 고정 막대 뒤에 가려지지 않게). 동작 줄이기 설정이면 바로 이동한다
+const scrollToTop = el => { if (el.getBoundingClientRect().top < 0) el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); };
 const pagerHtml = (page, pages) => `<div class="pager">${pagerButtons(page, pages)}</div>`;
 
 /* ---------- 챌린지 목록 (통계 탭에 포함) ---------- */
@@ -200,9 +202,7 @@ function applyTeamFilter() {
   $("tq").style.paddingLeft = m.region ? `${$("chip").offsetWidth + 14}px` : "";
   history.replaceState(null, "", challengeHref(m.slug, 1));
   renderChallenge(m.slug, 1);
-  // 스크롤을 내린 채 검색하면 첫 줄(결과 없음 안내 포함)이 고정 막대 뒤에 가려지므로, 목록 카드 맨 위로 되돌린다
-  const card = $("list").closest(".card");
-  if (card.getBoundingClientRect().top < 0) card.scrollIntoView();
+  scrollToTop($("list").closest(".card"));
 }
 
 /* ---------- 팀 상세 ---------- */
@@ -376,15 +376,14 @@ function renderStats() {
 }
 
 // 지역 표 카드: 통계 탭과 지역 탭이 함께 쓴다
-const regionsCard = () => `<div class="card"><div class="card-h" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px"><div><h2>${L.regionsTitle}</h2><p id="rsub"></p></div>
-        <input id="rq" type="search" placeholder="${L.searchPh}" style="flex:none;width:100%;max-width:360px" value="${esc(reg.q)}"></div>
-      <div class="card-c" style="padding-top:12px">
-      <div id="regtable"></div></div></div>`;
+const regionsCard = () => `<div class="card"><div class="card-h list-head"><div class="h-line"><h2>${L.regionsTitle}</h2><p id="rsub"></p></div></div>
+      <div class="card-c" style="padding-top:0">
+      <div id="regtable"><div class="pager"><div class="tsearch"><input id="rq" type="search" placeholder="${L.searchPh}" value="${esc(reg.q)}"></div><span class="pbtns"></span></div><div id="rtable"></div></div></div></div>`;
 function bindRegions() {
-  $("rq").addEventListener("input", e => { reg.q = e.target.value.trim().toLowerCase(); reg.page = 1; renderRegions(); });
+  $("rq").addEventListener("input", e => { reg.q = e.target.value.trim().toLowerCase(); reg.page = 1; renderRegions(); scrollToTop($("regtable").closest(".card")); });
   $("regtable").addEventListener("click", e => {
     const b = e.target.closest("button[data-p]"), th = e.target.closest("th[data-k]");
-    if (b && !b.disabled) { reg.page = +b.dataset.p; renderRegions(); }
+    if (b && !b.disabled) { reg.page = +b.dataset.p; renderRegions(); scrollToTop($("regtable").closest(".card")); }
     else if (th) {
       const k = th.dataset.k;
       reg.sortDir = reg.sortKey === k ? -reg.sortDir : (k === "name" || k === "country" ? 1 : -1);
@@ -401,8 +400,9 @@ function renderRegions() {
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const page = reg.page = clamp(reg.page, 1, pages);
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  $("rsub").textContent = L.regionsSub(n(rows.length), PAGE_SIZE);
-  $("regtable").innerHTML = `${pagerHtml(page, pages)}<div class="tscroll"><table style="min-width:640px;table-layout:fixed">
+  $("rsub").textContent = `(${L.regionsSub(n(rows.length), PAGE_SIZE)})`;
+  $("regtable").querySelector(".pbtns").innerHTML = pagerButtons(page, pages);
+  $("rtable").innerHTML = `<div class="tscroll"><table style="min-width:640px;table-layout:fixed">
     <colgroup><col style="width:7%"><col style="width:27%"><col style="width:23%"><col style="width:14%"><col style="width:14%"><col style="width:15%"></colgroup>
     <thead><tr><th class="num">${L.no}</th>${COLS.map(([k, l, c]) => `<th class="${c}" data-k="${k}" style="cursor:pointer">${L[l]}${sortKey === k ? (sortDir < 0 ? " ↓" : " ↑") : ""}</th>`).join("")}</tr></thead>
     <tbody>${pageRows.map((r, i) => `<tr class="go" data-href="/regions/${encodeURIComponent(r.slug)}"><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="/regions/${encodeURIComponent(r.slug)}">${esc(r.name)}</a></td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
@@ -427,7 +427,7 @@ const fillChallenge = (d, page = 1) => {  // 표는 처음 펼칠 때 한 번만
     tw.innerHTML = `${searchable ? `<div class="tbar"><input type="search" class="mq" placeholder="${L.challengeSearchPh}" aria-label="${L.challengeSearchPh}"><span class="pg"></span></div>` : ""}
       <table><colgroup><col style="width:64px"><col><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
       <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead><tbody></tbody></table>`;
-    tw.querySelector(".mq")?.addEventListener("input", e => { d._q = e.target.value.trim().toLowerCase(); fillChallenge(d, 1); });
+    tw.querySelector(".mq")?.addEventListener("input", e => { d._q = e.target.value.trim().toLowerCase(); fillChallenge(d, 1); scrollToTop(d); });
   }
   const q = d._q || "";
   const all = regionTeams.get(d.dataset.title).filter(t => !q || t.name.toLowerCase().includes(q));
@@ -438,7 +438,7 @@ const fillChallenge = (d, page = 1) => {  // 표는 처음 펼칠 때 한 번만
   if (pg) pg.innerHTML = pages > 1 || q ? pagerHtml(page, pages) : "";
   tw.querySelector("tbody").innerHTML = shown.map((t, i) => teamRow(t, start + i)).join("")
     + (all.length ? "" : `<tr><td class="empty-row" colspan="${CHALLENGE_COLS}">${L.noTeamMatch}</td></tr>`)
-    + (pages > 1 ? blankRows(Math.max(shown.length, 1), CHALLENGE_COLS) : "");
+    + (tw.querySelector(".tbar") ? blankRows(Math.max(shown.length, 1), CHALLENGE_COLS) : "");  // 검색 바가 있는 표는 결과가 적어도 높이가 줄지 않게 항상 채운다
 };
 const ACCORDION_MS = 250;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -490,7 +490,7 @@ function renderRegion(name) {
       const b = e.target.closest("button[data-p]");
       if (!b || b.disabled) return;
       fillChallenge(d, +b.dataset.p);
-      if (d.getBoundingClientRect().top < 0) d.scrollIntoView();  // 스티키 제목 아래 목록 맨 위로
+      scrollToTop(d);  // 스티키 제목 아래 목록 맨 위로
     });
     d.querySelector("summary").addEventListener("click", e => { e.preventDefault(); setOpen(d, d.classList.contains("shut") || !d.open); });
   });
@@ -539,7 +539,7 @@ document.addEventListener("click", e => {
   const row = e.target.closest("[data-href]");
   if (row && !e.target.closest("a, button, [data-region]") && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { go(row.dataset.href); return; }
   const b = e.target.closest("#list button[data-p]");
-  if (b && !b.disabled) go(challengeHref(mounted.slug, b.dataset.p));
+  if (b && !b.disabled) { go(challengeHref(mounted.slug, b.dataset.p)); scrollToTop($("list").closest(".card")); }
 });
 // 데모·프로젝트 카드 확대/축소 (Esc 로도 닫는다)
 // 확대 중에는 뒤 페이지가 스크롤되지 않게 잠근다. 스크롤바가 사라지며 화면이 밀리지 않도록 그 폭만큼 오른쪽을 채운다.
