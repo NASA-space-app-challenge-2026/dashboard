@@ -33,7 +33,7 @@ const STRINGS = {
     cardRegions: "지역 수", cardCountries: "참가 국가 수", cardMissions: "미션 수",
     cardGithub: "GitHub 있는 팀",
     distTitle: "팀원 수 분포", distSub: "제출 팀 기준", byMissionSub: "팀 수 많은 순",
-    teamsTitle: "팀 목록", teamsSub: (count, size) => `${count}개 팀 · ${size}개씩`,
+    teamsTitle: "팀 목록", teamListSub: (count, size) => `${count}개 팀 · ${size}개씩`,
     regionsTitle: "지역별 현황", searchPh: "지역 또는 국가 검색 (예: Seoul)",
     regionsSub: (count, size) => `${count}개 지역 · 열 제목을 누르면 정렬 · ${size}개씩`,
     unitPeople: k => `${k}명`, unitTeams: v => `${v}팀`,
@@ -67,7 +67,7 @@ const STRINGS = {
     cardRegions: "Regions", cardCountries: "Participating countries", cardMissions: "Missions",
     cardGithub: "Teams with GitHub",
     distTitle: "Team size distribution", distSub: "Submitted teams", byMissionSub: "Most teams first",
-    teamsTitle: "Teams", teamsSub: (count, size) => `${count} teams · ${size} per page`,
+    teamsTitle: "Teams", teamListSub: (count, size) => `${count} teams · ${size} per page`,
     regionsTitle: "Regions", searchPh: "Search region or country (e.g. Seoul)",
     regionsSub: (count, size) => `${count} regions · click a column header to sort · ${size} per page`,
     unitPeople: k => `${k} members`, unitTeams: v => `${v} teams`,
@@ -169,7 +169,7 @@ function renderMission(slug, pageParam) {
     <td title="${esc(L.clickRegionHint)}"><span class="rgn" data-region="${esc(t.region)}">${esc(t.region)}</span></td><td class="num">${t.members ?? "-"}</td>
     <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + (teams.length ? "" : `<tr><td class="empty-row" colspan="8">${mounted.all.length ? L.noTeamMatch : L.noTeams}</td></tr>`) + blankRows(Math.max(pageTeams.length, 1), 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
-  $("tsub").textContent = L.teamsSub(n(teams.length), PAGE_SIZE);
+  $("tsub").textContent = L.teamListSub(n(teams.length), PAGE_SIZE);
   $("list").innerHTML = `${pager}<div style="overflow-x:auto"><table>
     <colgroup><col style="width:64px"><col><col style="width:18%"><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
     <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead>
