@@ -30,7 +30,7 @@ const STRINGS = {
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", missionSearchPh: "팀 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
-    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", projectSummary: "프로젝트 요약", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", unzoom: "축소", showTranslated: "한국어로 번역", showOriginal: "자동 번역됨 · 원문 보기", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
+    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", projectSummary: "프로젝트 요약", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", openNew: "새 탭에서 열기", unzoom: "축소", showTranslated: "한국어로 번역", showOriginal: "자동 번역됨 · 원문 보기", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
     stats: "2026 통계", statsLead: date => `기준일 ${date}`,
@@ -63,7 +63,7 @@ const STRINGS = {
     back: "← Stats", notFound: "Mission not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official mission page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", missionSearchPh: "Search team", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
-    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", projectSummary: "Project summary", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", unzoom: "Collapse", showTranslated: "Translate to Korean", showOriginal: "Auto-translated · Show original", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
+    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", projectSummary: "Project summary", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", openNew: "Open in new tab", unzoom: "Collapse", showTranslated: "Translate to Korean", showOriginal: "Auto-translated · Show original", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
     stats: "2026 Stats", statsLead: date => `As of ${date}`,
@@ -208,6 +208,7 @@ const ZoomIcon = Object.freeze({
   IN: svg('<path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/>'),
   OUT: svg('<path d="m14 10 7-7"/><path d="M20 10h-6V4"/><path d="m3 21 7-7"/><path d="M4 14h6v6"/>'),
 });
+const OutIcon = svg('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="m15 3 6 0 0 6"/><path d="M10 14 21 3"/>');
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
 // 유튜브 링크(watch / youtu.be / shorts / embed)에서 영상 ID를 뽑는다. 유튜브가 아니면 null.
 const youtubeId = u => {
@@ -235,9 +236,9 @@ function renderTeam(slug) {
       <span class="txt"><b>${l}</b><small>${esc(hostOf(u))}</small></span><span class="go">↗</span></a>`).join("");
   const ytId = youtubeId(t.demoLink);
   // 데모·프로젝트 iframe 카드: 제목 줄의 버튼으로 화면 가득 확대한다. 같은 요소를 CSS로 키우므로 iframe 이 다시 불러와지지 않는다.
-  const zoomCard = (title, frame) => `<div class="card team-sec zoomable"><div class="card-h zoom-h"><h2>${title}</h2><button type="button" class="zoom-btn" title="${L.zoom}" aria-label="${L.zoom}"><span class="z-in">${ZoomIcon.IN}</span><span class="z-out">${ZoomIcon.OUT}</span></button></div><div class="card-c">${frame}</div></div>`;
-  const demo = ytId ? zoomCard(L.demo, `<div class="demo-frame"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" title="${esc(t.name)} ${L.demo}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`) : "";
-  const project = t.projectEmbed ? zoomCard(L.project, `<div class="demo-frame site"><iframe src="${esc(t.projectLink)}" title="${esc(t.name)} ${L.project}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div>`) : "";
+  const zoomCard = (title, url, frame) => `<div class="card team-sec zoomable"><div class="card-h zoom-h"><h2>${title}</h2><div class="zoom-acts"><a class="zoom-btn" href="${esc(url)}" target="_blank" rel="noopener" title="${L.openNew}" aria-label="${L.openNew}">${OutIcon}</a><button type="button" class="zoom-btn" title="${L.zoom}" aria-label="${L.zoom}"><span class="z-in">${ZoomIcon.IN}</span><span class="z-out">${ZoomIcon.OUT}</span></button></div></div><div class="card-c">${frame}</div></div>`;
+  const demo = ytId ? zoomCard(L.demo, t.demoLink, `<div class="demo-frame"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" title="${esc(t.name)} ${L.demo}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`) : "";
+  const project = t.projectEmbed ? zoomCard(L.project, t.projectLink, `<div class="demo-frame site"><iframe src="${esc(t.projectLink)}" title="${esc(t.name)} ${L.project}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div>`) : "";
   app.innerHTML = `<a class="back" href="${mission ? `/mission/${encodeURIComponent(mission.slug)}` : "/stats"}">← ${esc(missionText)}</a><h1>${esc(t.name)}</h1>
     <div class="grid">${cards}</div>
     <div class="card team-sec"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>
@@ -511,7 +512,7 @@ function syncZoomLock() {
 const setZoom = (card, on) => {
   const apply = () => {
     card.classList.toggle("zoomed", on);
-    const b = card.querySelector(".zoom-btn");
+    const b = card.querySelector("button.zoom-btn");
     b.title = b.ariaLabel = on ? L.unzoom : L.zoom;
     syncZoomLock();
   };
@@ -521,7 +522,7 @@ const setZoom = (card, on) => {
   document.startViewTransition(apply).finished.finally(() => { card.style.viewTransitionName = ""; });
 };
 document.addEventListener("click", e => {
-  const b = e.target.closest(".zoom-btn");
+  const b = e.target.closest("button.zoom-btn");
   if (b) { const c = b.closest(".zoomable"); setZoom(c, !c.classList.contains("zoomed")); }
 });
 document.addEventListener("keydown", e => {

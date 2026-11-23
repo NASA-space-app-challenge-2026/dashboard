@@ -268,7 +268,8 @@ button.chip:hover{background:hsl(var(--accent))}
 .team-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin-bottom:16px}
 .team-pair>.team-sec{margin-bottom:0;min-width:0}
 .zoom-h,.tr-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.zoom-btn{display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid hsl(var(--border));border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+.zoom-acts{display:flex;gap:8px}
+.zoom-btn{display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid hsl(var(--border));border-radius:8px;background:transparent;color:inherit;cursor:pointer;text-decoration:none}
 .tr-toggle{padding:4px 10px;border:1px solid hsl(var(--border));border-radius:8px;background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:13px;cursor:pointer}
 .tr-toggle:hover:not(:disabled){background:hsl(var(--muted))}.tr-toggle:disabled{opacity:.6;cursor:progress}
 .zoom-btn:hover{background:hsl(var(--muted))}
