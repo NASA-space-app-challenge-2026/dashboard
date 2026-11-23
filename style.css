@@ -156,3 +156,42 @@ h2.sec{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:8px 0 14px}
 @keyframes rows-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 #list tbody,#regtable tbody{animation:rows-in .35s ease-out both}
 @media (prefers-reduced-motion:reduce){#list tbody,#regtable tbody{animation:none}}
+
+/* mobile */
+button,summary,nav a,.pager button{touch-action:manipulation}
+@media(max-width:640px){
+  body{font-size:16px}
+  main{padding:0 16px 120px}
+  header.top{margin-bottom:20px}
+  header.top .in{height:auto;padding:8px 16px;flex-wrap:wrap;gap:4px 8px}
+  header.top .brand{font-size:16px;margin-right:auto}
+  button.lang{margin-left:0;height:40px}
+  button.theme{width:40px;height:40px}
+  nav{order:3;width:100%;overflow-x:auto;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav a{padding:8px 12px;white-space:nowrap}
+  h1{font-size:26px}
+  .lead{margin-bottom:20px}
+  .card-h{padding:16px 16px 0}.card-c{padding:16px}
+  .grid,.grid3{gap:10px}
+  .stat{padding:14px}
+  .stat b{font-size:24px}
+  .stat small{display:block;margin:0}
+  .bar{grid-template-columns:minmax(64px,34%) 1fr 56px;gap:8px}
+  .controls>*{flex:1 1 100%;min-width:0}
+  input[type=search]{min-width:0}
+  #rq{max-width:none!important}
+  summary{padding:12px 14px;font-size:16px;flex-wrap:wrap}
+  .mission-row{padding:12px 14px;font-size:16px}
+  .pager{gap:2px;flex-wrap:wrap}
+  .pager .info{flex:1 1 100%;margin-right:0;margin-bottom:4px}
+  .pager button{flex:1 1 0;min-width:0;height:40px;padding:0 4px;font-size:14px}
+  .pager button:first-of-type,.pager button:last-of-type{flex:0 0 auto;padding:0 8px}
+  .pager button[data-p]:not(:first-child):not(:last-of-type){width:auto;padding:0}
+  .pager .gap{flex:0 0 14px;width:14px}
+  th,td{padding:4px 12px}
+  td a.lk{height:32px}
+  .empty,.err{padding:32px 16px}
+  h2.sec{font-size:20px}
+}
+@media(max-width:380px){.grid,.grid3{grid-template-columns:1fr}}
