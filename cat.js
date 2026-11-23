@@ -4,14 +4,12 @@
   if (!window.L2Dwidget) return;
   const MODEL_URL = "https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json";
   const MOBILE_MAX_SIDE = 540;  // 화면의 짧은 변 기준
+  if (Math.min(innerWidth, innerHeight) <= MOBILE_MAX_SIDE) return;  // 모바일에서는 고양이를 띄우지 않는다
   const WIDGET_ID = "live2d-widget", CANVAS_ID = "live2dcanvas", FOOTER_ID = "footer";
   const SOUND_URLS = ["/assets/cat/meow-1.mp3", "/assets/cat/meow-2.m4a", "/assets/cat/meow-3.m4a"];
   const VOLUME = 0.08;
   const FEET_RATIO = 0.27;  // 캔버스 바닥에서 고양이 발바닥까지의 투명 여백 (캔버스 높이 대비)
-  const DISPLAY = {
-    desktop: { width: 100, height: 200, hOffset: 0, vOffset: -40 },
-    mobile: { width: 56, height: 112, hOffset: -10, vOffset: -40 },
-  };
+  const SIZE = { width: 100, height: 200, hOffset: 0, vOffset: -40 };
 
   let last = -1;
   const meow = () => {
@@ -26,8 +24,8 @@
 
   // 푸터의 구분선(border-top)에 닿으면 고양이가 선에 얹혀 같이 밀려 올라간다.
   const rideFooter = widget => {
-    const base = size.vOffset;
-    const feet = size.height * FEET_RATIO;
+    const base = SIZE.vOffset;
+    const feet = SIZE.height * FEET_RATIO;
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -56,11 +54,9 @@
     });
   };
 
-  const size = Math.min(innerWidth, innerHeight) <= MOBILE_MAX_SIDE ? DISPLAY.mobile : DISPLAY.desktop;
   L2Dwidget.init({
     model: { jsonPath: MODEL_URL, scale: 1 },
-    display: { position: "right", ...size },
-    mobile: { show: true, scale: 1.0 },
+    display: { position: "right", ...SIZE },
     react: { opacityDefault: 0.7, opacityOnHover: 0.2 },
   });
 

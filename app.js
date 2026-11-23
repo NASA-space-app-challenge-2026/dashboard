@@ -14,7 +14,7 @@ const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", searchLabel: "검색", gsPh: "챌린지, 팀, 지역, 국가 이름으로 검색", searchChallenges: "챌린지", searchRegions: "지역", searchTeams: "팀", searchEmpty: "검색 결과가 없습니다.", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
+    langToggle: "EN", langShort: "EN", searchLabel: "검색", gsPh: "챌린지, 팀, 지역, 국가 이름으로 검색", searchChallenges: "챌린지", searchRegions: "지역", searchTeams: "팀", searchEmpty: "검색 결과가 없습니다.", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
     aboutTitle: "NASA Space Apps Challenge 소개",
     aboutBody: [
       "NASA Space Apps Challenge는 NASA가 매년 개최하는 세계 최대 규모의 국제 해커톤입니다. 누구나 팀을 이뤄 참가할 수 있으며, NASA가 공개한 우주·지구 관측 데이터를 활용해 실제 문제를 해결하는 프로젝트를 만듭니다.",
@@ -47,7 +47,7 @@ const STRINGS = {
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", searchLabel: "Search", gsPh: "Search by challenge, team, region or country", searchChallenges: "Challenges", searchRegions: "Regions", searchTeams: "Teams", searchEmpty: "No results.", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
+    langToggle: "한국어", langShort: "KO", searchLabel: "Search", gsPh: "Search by challenge, team, region or country", searchChallenges: "Challenges", searchRegions: "Regions", searchTeams: "Teams", searchEmpty: "No results.", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
     aboutTitle: "About NASA Space Apps Challenge",
     aboutBody: [
       "The NASA Space Apps Challenge is the largest annual international hackathon, hosted by NASA. Anyone can join a team and build projects that tackle real-world problems using the space and Earth observation data NASA makes openly available.",
@@ -116,6 +116,7 @@ const setView = (nav, title) => {
   document.title = `${title} · NASA Space Apps Challenge 2026`;
   document.documentElement.lang = lang;
   $("lang-label").textContent = L.langToggle;
+  $("lang-short").textContent = L.langShort;
   $("gs-open-label").textContent = L.searchLabel;
   $("gs-q").placeholder = L.gsPh;
   $("footer").innerHTML = `${L.footer}<div class="lic"><a href="${REPO_URL}" target="_blank" rel="noopener">GitHub</a> · <a href="/license">License</a></div>`;

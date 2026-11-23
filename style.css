@@ -33,6 +33,7 @@ nav a:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
 nav a.active{background:hsl(var(--accent));color:hsl(var(--foreground))}
 button.lang{height:34px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;border-radius:calc(var(--radius) - 2px);border:0;
   background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:15px;font-weight:500;cursor:pointer}
+button.lang #lang-short{display:none}
 button.lang:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
 h1{font-size:32px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
 .lead{color:hsl(var(--muted-foreground));margin:0 0 28px}
@@ -69,7 +70,8 @@ input,select{font:inherit;font-size:16px;height:42px;padding:0 12px;border-radiu
   border:1px solid hsl(var(--input));background:transparent;color:hsl(var(--foreground))}
 select option{background:hsl(var(--background))}
 input[type=search]{flex:1;min-width:200px}
-input:focus,select:focus{outline:2px solid hsl(var(--ring));outline-offset:1px}
+select:focus{outline:2px solid hsl(var(--ring));outline-offset:1px}
+input:focus{outline:none}
 select{max-width:100%}
 
 /* accordion / table */
@@ -204,21 +206,29 @@ button,summary,nav a,.pager button{touch-action:manipulation}
   main{padding:0 16px 48px}
   footer.foot{padding:16px 16px 32px}
   header.top{margin-bottom:20px}
-  header.top .in{height:auto;padding:8px 16px;flex-wrap:wrap;gap:4px 8px}
-  header.top .brand{font-size:16px;width:100%}
-  button.lang{order:2;height:40px}
-  button.gs-open{order:2;margin-left:0;height:40px}
-  nav{order:1;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+  header.top .in{height:auto;padding:12px 16px 10px;flex-wrap:wrap;gap:8px}
+  header.top .brand{font-size:16px;width:100%;line-height:1.3}
+  header.top button.lang,header.top button.gs-open{order:2;margin-left:0;height:40px;flex:none;border:1px solid hsl(var(--border))}
+  button.gs-open svg{width:22px;height:22px}
+  header.top button.gs-open{width:40px;height:40px;padding:0;justify-content:center;align-self:center}
+  button.lang{min-width:40px;padding:0 10px;justify-content:center;align-self:center;font-size:16px;font-weight:600}
+  button.lang svg,button.lang #lang-label{display:none}
+  button.lang #lang-short{display:inline}
+  nav{order:1;flex:1;min-width:0;gap:2px;overflow-x:auto;scrollbar-width:none}
   nav::-webkit-scrollbar{display:none}
-  nav a{padding:8px 12px;white-space:nowrap}
+  nav a{padding:8px 10px;white-space:nowrap}
   h1{font-size:26px}
   .lead{margin-bottom:20px}
   .card-h{padding:16px 16px 0}.card-c{padding:16px}
-  .grid,.grid3{gap:10px}
-  .stat{padding:14px}
-  .stat b{font-size:24px}
-  .stat small{display:block;margin:0}
-  .bar{grid-template-columns:minmax(64px,34%) 1fr 56px;gap:8px}
+  .grid,.grid3{gap:10px;grid-auto-rows:1fr}  /* 줄마다 높이가 달라지지 않게 가장 큰 카드에 맞춘다 */
+  .stat{padding:12px 14px;display:flex;flex-direction:column;min-width:0}
+  .stat span{font-size:clamp(9px,calc((50vw - 49px)/14),12px);line-height:1.35;white-space:nowrap}  /* 라벨은 한 줄로 고정하고, 카드 폭(≈50vw-49px)에 맞춰 글씨를 줄인다 */
+  .stat b{display:block;font-size:24px;line-height:1.15;margin-top:0;padding-top:6px}
+  .stat small{display:block;margin:2px 0 0;font-size:13px;line-height:1.35}
+  .bar{grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;margin:14px 0}
+  .bar .l{grid-column:1;grid-row:1}
+  .bar .v{grid-column:2;grid-row:1;white-space:nowrap}
+  .bar .t{grid-column:1/-1;grid-row:2}
   .controls>*{flex:1 1 100%;min-width:0}
   input[type=search]{min-width:0}
   #rq{max-width:none!important}
@@ -226,11 +236,13 @@ button,summary,nav a,.pager button{touch-action:manipulation}
   summary .sum-t{flex:1 1 160px;min-width:160px}  /* 제목이 눌리지 않게 최소 폭을 두고, 모자라면 뱃지를 아랫줄로 내린다 */
   summary .badge{margin-left:0}
   summary::after{margin-left:auto}
-  .challenge-row{padding:12px 14px;font-size:16px}
-  .pager{gap:2px;flex-wrap:wrap}
+  .challenge-row{padding:12px 14px;font-size:16px;flex-wrap:wrap}
+  .challenge-row .sum-t{flex:1 1 160px;min-width:160px}
+  .challenge-row .badge{margin-left:0}
+  .pager{gap:2px;flex-wrap:wrap;justify-content:center}
   .pager button{flex:1 1 0;min-width:0;height:40px;padding:0 4px;font-size:14px}
   .pager button:first-of-type,.pager button:last-of-type{flex:0 0 auto;padding:0 8px}
-  .pager button[data-p]:not(:first-child):not(:last-of-type){width:auto;padding:0}
+  .pager button[data-p]:not(:first-child):not(:last-of-type){max-width:44px;width:auto;padding:0}
   .pager .gap{flex:0 0 14px;width:14px}
   .pager .tsearch{max-width:none;margin-bottom:4px}
   th,td{padding:4px 12px}
