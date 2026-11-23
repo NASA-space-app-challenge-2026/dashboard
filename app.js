@@ -31,7 +31,6 @@ const STRINGS = {
     cardTotal: "전체 등록 팀", cardSubmitted: "최종 제출 팀", cardRate: pct => `제출률 ${pct}%`,
     cardPeople: "제출 팀 인원", cardAvg: avg => `팀당 평균 ${avg}명`,
     cardRegions: "지역 수", cardCountries: "참가 국가 수", cardMissions: "미션 수",
-    cardGithub: "GitHub 있는 팀",
     distTitle: "팀원 수 분포", distSub: "제출 팀 기준", byMissionSub: "팀 수 많은 순",
     teamsTitle: "팀 목록", teamListSub: (count, size) => `${count}개 팀 · ${size}개씩`,
     regionsTitle: "지역별 현황", searchPh: "지역 또는 국가 검색 (예: Seoul)",
@@ -65,7 +64,6 @@ const STRINGS = {
     cardTotal: "Registered teams", cardSubmitted: "Final submitted teams", cardRate: pct => `${pct}% submitted`,
     cardPeople: "Members on submitted teams", cardAvg: avg => `${avg} per team on average`,
     cardRegions: "Regions", cardCountries: "Participating countries", cardMissions: "Missions",
-    cardGithub: "Teams with GitHub",
     distTitle: "Team size distribution", distSub: "Submitted teams", byMissionSub: "Most teams first",
     teamsTitle: "Teams", teamListSub: (count, size) => `${count} teams · ${size} per page`,
     regionsTitle: "Regions", searchPh: "Search region or country (e.g. Seoul)",
@@ -356,7 +354,7 @@ function renderRegion(name) {
   const cards = [
     [n(region.teams), L.cardTotal], [n(teams.length), L.cardSubmitted, L.cardRate(Math.round(region.rate * 100))],
     [n(people), L.cardPeople, teams.length ? L.cardAvg((people / teams.length).toFixed(1)) : ""],
-    [n(byMission.size), L.cardMissions], [n(teams.filter(t => t.sourceLink).length), L.cardGithub]
+    [n(byMission.size), L.cardMissions]
   ].map(([v, l, s]) => `<div class="card stat"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ""}</div>`).join("");
   const open = teams.length <= REGION_OPEN_MAX ? "open" : "";
   const missions = [...byMission].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])).map(([title, ts]) => {
@@ -365,7 +363,7 @@ function renderRegion(name) {
       ${c ? `<a class="badge badge-lk" href="${BASE + esc(c.path)}" target="_blank" rel="noopener">${L.official}</a>` : ""}<span class="badge">${L.badge(n(ts.length), n(ts.reduce((a, t) => a + (t.members || 0), 0)))}</span></summary><div class="tw"></div></details>`;
   }).join("");
   app.innerHTML = `<a class="back" href="/regions">${L.regionBack}</a><h1>${esc(region.name)}</h1><p class="lead">${esc(region.country)}</p>
-    <div class="grid grid3">${cards}</div><div class="sec-h"><h2 class="sec">${L.regionMissionsTitle}</h2>${teams.length ? `<span><button class="more" data-all="1">${L.expandAll}</button><button class="more" data-all="0">${L.collapseAll}</button></span>` : ""}</div>
+    <div class="grid">${cards}</div><div class="sec-h"><h2 class="sec">${L.regionMissionsTitle}</h2>${teams.length ? `<span><button class="more" data-all="1">${L.expandAll}</button><button class="more" data-all="0">${L.collapseAll}</button></span>` : ""}</div>
     ${teams.length ? missions : `<div class="empty">${L.noRegionTeams}</div>`}`;
   app.querySelectorAll("button[data-all]").forEach(b => b.addEventListener("click", () => app.querySelectorAll("details").forEach(d => setOpen(d, b.dataset.all === "1"))));
   app.querySelectorAll("details").forEach(d => {
