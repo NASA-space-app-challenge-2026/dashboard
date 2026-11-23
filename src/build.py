@@ -1,13 +1,34 @@
 """캐시(list, pages)에서 단일 데이터 파일 data/teams.js 를 생성한다."""
-import hashlib, json, re
+import hashlib, json, re, shutil
 from collections import Counter
 from datetime import date
 from pathlib import Path
 from crawl import BASE, CACHE, ROOT, is_submitted, stage_challenges
+from stamp import stamp
 
 OVERRIDES = json.loads((Path(__file__).parent / "source_overrides.json").read_text())
 GITHUB_WEB = json.loads((Path(__file__).parent / "github_web.json").read_text())  # resolve_github_web.py 결과
 VIRTUAL = "Virtual"
+EXTRACTED = CACHE / "extracted.json"  # extract_html.py 결과 (팀 소개 글·이미지, 챌린지 이미지)
+TEAM_DIR = ROOT / "data" / "teams"  # 팀 페이지를 열 때 하나씩 불러오는 팀별 소개 JSON
+
+
+def slug_of(path):
+    return path.strip("/").split("/")[-1]
+
+
+def write_team_details(rows, teams):
+    """data/teams/<슬러그>.json = {description, image}. 소개도 이미지도 없는 팀은 파일을 만들지 않는다."""
+    shutil.rmtree(TEAM_DIR, ignore_errors=True)
+    TEAM_DIR.mkdir(parents=True)
+    count = 0
+    for r in rows:
+        e = teams.get(slug_of(r["path"]))
+        d = {"description": e["description"], "image": e["image"]["url"] if e["image"] else None} if e else None
+        if d and (d["description"] or d["image"]):
+            (TEAM_DIR / f"{slug_of(r['path'])}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
+            count += 1
+    return count
 
 
 def repo_of(url):
@@ -83,6 +104,11 @@ def main():
             "sourceLink": f"https://github.com/{src}" if src else None,
         })
 
+    extracted = json.loads(EXTRACTED.read_text()) if EXTRACTED.exists() else {"teams": {}, "challenges": {}}
+    for c in challenges.values():
+        img = extracted["challenges"].get(c["slug"], {}).get("image")
+        c["image"] = img["url"] if img else None
+
     data = {
         "generatedAt": date.today().isoformat(),
         "totalTeams": len(teams),
@@ -93,8 +119,10 @@ def main():
     }
     out = ROOT / "data" / "teams.js"
     out.write_text("window.DATA = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + ";\n")
+    detailed = write_team_details(rows, extracted["teams"])
     missing = sum(r["members"] is None for r in rows)
-    print(f"전체 {len(teams)}팀, 제출 {len(rows)}팀, 지역 {len(data['regions'])}개, 상세 누락 {missing} → {out}")
+    stamp()  # teams.js 가 바뀌었으니 index.html 의 해시도 갱신
+    print(f"전체 {len(teams)}팀, 제출 {len(rows)}팀, 지역 {len(data['regions'])}개, 상세 누락 {missing}, 팀별 소개 {detailed}개 → {out}")
 
 
 if __name__ == "__main__":

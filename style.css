@@ -206,3 +206,24 @@ button,summary,nav a,.pager button{touch-action:manipulation}
 button.chip{height:34px;padding:0 12px;border-radius:999px;border:1px solid hsl(var(--input));background:hsl(var(--muted));color:inherit;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
 button.chip:hover{background:hsl(var(--accent))}
 .rgn{cursor:pointer}.rgn:hover{text-decoration:underline}
+.team-img,.mission-img{display:block;max-width:100%;height:auto;border-radius:8px;margin-bottom:16px}
+.mission-intro{display:flex;gap:24px;align-items:flex-start;margin-bottom:28px}
+.mission-intro .ext{margin-bottom:0}
+.mission-intro .mission-img{flex:none;width:min(40%,360px);margin-bottom:0}
+@media(max-width:700px){.mission-intro{flex-direction:column;gap:16px}.mission-intro .mission-img{width:100%}}
+.desc.intro{white-space:pre-line;margin-bottom:0}
+.mission-thumb{flex:none;width:72px;height:60px;object-fit:cover;border-radius:6px}
+@media(max-width:700px){.mission-thumb{width:56px;height:48px}}
+.team-intro{display:flex;gap:24px;align-items:flex-start}
+.team-intro .team-img{flex:none;width:300px;max-width:40%;margin-bottom:0}
+.team-intro .desc{flex:1;min-width:0}
+@media(max-width:700px){.team-intro{flex-direction:column;gap:16px}.team-intro .team-img{max-width:100%}}
+.team-sec{margin-bottom:16px}
+.link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.link-tile{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid hsl(var(--border));border-radius:var(--radius);text-decoration:none;color:inherit;transition:background .15s,border-color .15s}
+.link-tile:hover{background:hsl(var(--accent));border-color:hsl(var(--ring)/.4)}
+.link-tile .ico{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:hsl(var(--muted))}
+.link-tile .txt{display:flex;flex-direction:column;min-width:0;flex:1}
+.link-tile b{font-weight:600}
+.link-tile small{color:hsl(var(--muted-foreground));font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link-tile .go{flex:none;color:hsl(var(--muted-foreground))}

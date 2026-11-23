@@ -1,4 +1,4 @@
-// History API 라우팅 SPA: /stats (기본), /mission/<slug>/<page>, /regions, /regions/<소문자-하이픈 이름>, /about
+// History API 라우팅 SPA: /stats (기본), /mission/<slug>/<page>, /teams/<slug>, /regions, /regions/<소문자-하이픈 이름>, /about
 const BASE = "https://www.spaceappschallenge.org";
 const PAGE_SIZE = 20;
 const REPO_URL = "https://github.com/NASA-space-app-challenge-2026/dashboard";
@@ -24,7 +24,7 @@ const STRINGS = {
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
-    teamPage: "팀 페이지", demo: "데모", project: "프로젝트", source: "소스",
+    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
     stats: "통계", statsLead: date => `기준일 ${date}`,
@@ -57,7 +57,7 @@ const STRINGS = {
     back: "← Stats", notFound: "Mission not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official mission page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
-    teamPage: "Team page", demo: "Demo", project: "Project", source: "Source",
+    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
     stats: "Stats", statsLead: date => `As of ${date}`,
@@ -82,6 +82,9 @@ const $ =id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const n = x => x.toLocaleString();
 const D = window.DATA, T = D.teams;
+const teamSlug = t => t.path.split("/").filter(Boolean).pop();  // "/2026/find-a-team/<slug>/" -> "<slug>" (경로가 유일하므로 슬러그도 유일)
+const teamHref = t => `/teams/${encodeURIComponent(teamSlug(t))}`;
+const TEAM_BY_SLUG = new Map(T.map(t => [teamSlug(t), t]));
 const MISSION_TEXT = { [Lang.KO]: window.MISSIONS_KO || {}, [Lang.EN]: window.MISSIONS_EN || {} };
 const CH_BY_TITLE = new Map(D.challenges.map(c => [c.title, c]));
 // 미션 표시용 텍스트 (key: "title" | "excerpt" | "summary"). 언어별 값이 없으면 원문. 필터/매칭은 항상 원문 title 로 한다.
@@ -127,7 +130,8 @@ function missionRows() {
   return [...D.challenges].sort((a, b) => (stat.get(b.title)?.teams || 0) - (stat.get(a.title)?.teams || 0))
     .map(c => {
       const s = stat.get(c.title) || { teams: 0, members: 0 };
-      return `<a class="mission-row" href="/mission/${encodeURIComponent(c.slug)}">${esc(mText(c, "title"))}
+      const short = mText(c, "summary") || mText(c, "excerpt");
+      return `<a class="mission-row" href="/mission/${encodeURIComponent(c.slug)}">${c.image ? `<img class="mission-thumb" src="${esc(c.image)}" alt="" loading="lazy">` : ""}<span class="sum-t"><span>${esc(mText(c, "title"))}</span>${short ? `<small>${esc(short)}</small>` : ""}</span>
         <span class="badge">${L.badge(n(s.teams), n(s.members))}</span></a>`;
     }).join("");
 }
@@ -143,8 +147,9 @@ function renderMission(slug, pageParam) {
     mounted = { slug, all: teams, teams, pages: Math.max(1, Math.ceil(teams.length / PAGE_SIZE)), region: "", q: "" };
     app.innerHTML = `<a class="back" href="/stats">${L.back}</a><h1>${esc(mText(mission, "title"))}</h1>
       <p class="lead">${L.detailLead(n(teams.length), n(teams.reduce((a, t) => a + (t.members || 0), 0)))}</p>
-      <p class="desc">${esc(mText(mission, "excerpt"))}</p>
-      <a class="ext" href="${BASE + esc(mission.path)}" target="_blank" rel="noopener">${L.official}</a>
+      <div class="mission-intro">${mission.image ? `<img class="mission-img" src="${esc(mission.image)}" alt="">` : ""}
+        <div><p class="desc">${esc(mText(mission, "excerpt"))}</p>
+        <a class="ext" href="${BASE + esc(mission.path)}" target="_blank" rel="noopener">${L.official}</a></div></div>
       <div class="mfilter"><input id="tq" type="search" placeholder="${L.teamSearchPh}"><span id="chip"></span></div>
       <div id="list"></div>`;
     $("tq").addEventListener("input", e => { mounted.q = e.target.value.trim().toLowerCase(); applyTeamFilter(); });
@@ -157,7 +162,7 @@ function renderMission(slug, pageParam) {
   const { teams, pages } = mounted, page = clamp(pageParam, 1, pages);
   const pageTeams = teams.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const rows = pageTeams.map((t, i) => `<tr>
-    <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="${BASE + esc(t.path)}" target="_blank" rel="noopener">${esc(t.name)}</a></td>
+    <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="${teamHref(t)}">${esc(t.name)}</a></td>
     <td title="${esc(L.clickRegionHint)}"><span class="rgn" data-region="${esc(t.region)}">${esc(t.region)}</span></td><td class="num">${t.members ?? "-"}</td>
     <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + blankRows(pageTeams.length, 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
@@ -174,6 +179,46 @@ function applyTeamFilter() {
   $("chip").innerHTML = m.region ? `<button class="chip" type="button" title="${L.clearRegion}">${L.region}: ${esc(m.region)} ✕</button>` : "";
   history.replaceState(null, "", `/mission/${encodeURIComponent(m.slug)}/1`);
   renderMission(m.slug, 1);
+}
+
+/* ---------- 팀 상세 ---------- */
+const svg = d => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const LinkIcon = Object.freeze({
+  OFFICIAL: svg('<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>'),
+  DEMO: svg('<circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/>'),
+  PROJECT: svg('<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>'),
+  GITHUB: svg('<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>'),
+});
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
+function renderTeam(slug) {
+  mounted = null;
+  const t = TEAM_BY_SLUG.get(slug);
+  if (!t) { setView(Nav.STATS, L.team); app.innerHTML = `<a class="back" href="/stats">${L.back}</a><div class="empty">${L.teamNotFound}</div>`; return; }
+  const mission = CH_BY_TITLE.get(t.challenge);
+  setView(Nav.STATS, t.name);
+  const missionText = mission ? mText(mission, "title") : t.challenge;
+  const regionLk = REG.some(r => r.name === t.region) ? `<a href="/regions/${encodeURIComponent(regionSlug(t.region))}">${esc(t.region)}</a>` : esc(t.region);
+  const cards = [
+    [L.members, t.members ?? "-"], [L.region, regionLk], [L.country, esc(t.country)],
+    [L.mission, mission ? `<a href="/mission/${encodeURIComponent(mission.slug)}">${esc(missionText)}</a>` : esc(missionText)]
+  ].map(([l, v]) => `<div class="card stat"><span>${l}</span><b style="font-size:20px">${v}</b></div>`).join("");
+  const links = [[LinkIcon.OFFICIAL, L.officialTeam.replace(" ↗", ""), BASE + t.path], [LinkIcon.DEMO, L.demo, t.demoLink], [LinkIcon.PROJECT, L.project, t.projectLink], [LinkIcon.GITHUB, "GitHub", t.sourceLink]]
+    .filter(([, , u]) => u).map(([icon, l, u]) => `<a class="link-tile" href="${esc(u)}" target="_blank" rel="noopener"><span class="ico">${icon}</span>
+      <span class="txt"><b>${l}</b><small>${esc(hostOf(u))}</small></span><span class="go">↗</span></a>`).join("");
+  app.innerHTML = `<a class="back" href="${mission ? `/mission/${encodeURIComponent(mission.slug)}` : "/stats"}">← ${esc(missionText)}</a><h1>${esc(t.name)}</h1>
+    <div class="grid">${cards}</div>
+    <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>
+    <div class="card team-sec"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>`;
+  loadTeamIntro(slug);
+}
+// 소개 글·이미지는 팀별 JSON(data/teams/<슬러그>.json)을 이 페이지를 열 때 하나만 불러온다. 파일이 없으면 소개가 없는 팀이다.
+async function loadTeamIntro(slug) {
+  let d = null;
+  try { const r = await fetch(`/data/teams/${encodeURIComponent(slug)}.json`); if (r.ok) d = await r.json(); } catch {}
+  const box = $("intro");
+  if (!box || box.dataset.slug !== slug) return;  // 그 사이 다른 화면으로 이동했다
+  box.innerHTML = `<div class="team-intro">${d?.image ? `<img class="team-img" src="${esc(d.image)}" alt="${esc(TEAM_BY_SLUG.get(slug).name)}">` : ""}
+    ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>`;
 }
 
 /* ---------- 통계 ---------- */
@@ -246,7 +291,7 @@ function renderRegionList() {
 }
 
 const REGION_OPEN_MAX = 100;  // 제출 팀이 이 수 이하인 지역은 미션 목록을 처음부터 펼친다
-const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td><a class="name" href="${BASE + esc(t.path)}" target="_blank" rel="noopener">${esc(t.name)}</a></td>
+const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td><a class="name" href="${teamHref(t)}">${esc(t.name)}</a></td>
   <td class="num">${t.members ?? "-"}</td><td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`;
 const fillMission = d => {  // 표는 처음 펼칠 때 한 번만 그린다 (팀이 수천 개인 지역 대비)
   if (d.dataset.filled) return;
@@ -323,6 +368,7 @@ function route() {
   if (view !== lastView) scrollTo(0, 0);  // 다른 화면으로 갈 때만 맨 위로
   lastView = view;
   if (kind === "mission" && slug) renderMission(slug, parseInt(p, 10) || 1);
+  else if (kind === "teams" && slug) renderTeam(slug);
   else if (kind === "about") renderAbout();
   else if (kind === "regions" && slug) renderRegion(slug);
   else if (kind === "regions") { mounted = null; renderRegionList(); }
