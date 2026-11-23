@@ -30,7 +30,7 @@ const STRINGS = {
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", missionSearchPh: "팀 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
-    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
+    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", projectSummary: "프로젝트 요약", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", unzoom: "축소", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
     stats: "2026 통계", statsLead: date => `기준일 ${date}`,
@@ -63,7 +63,7 @@ const STRINGS = {
     back: "← Stats", notFound: "Mission not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official mission page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", missionSearchPh: "Search team", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
-    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
+    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", projectSummary: "Project summary", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", unzoom: "Collapse", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
     stats: "2026 Stats", statsLead: date => `As of ${date}`,
@@ -204,6 +204,10 @@ const LinkIcon = Object.freeze({
   PROJECT: svg('<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>'),
   GITHUB: svg('<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>'),
 });
+const ZoomIcon = Object.freeze({
+  IN: svg('<path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/>'),
+  OUT: svg('<path d="m14 10 7-7"/><path d="M20 10h-6V4"/><path d="m3 21 7-7"/><path d="M4 14h6v6"/>'),
+});
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
 // 유튜브 링크(watch / youtu.be / shorts / embed)에서 영상 ID를 뽑는다. 유튜브가 아니면 null.
 const youtubeId = u => {
@@ -230,12 +234,14 @@ function renderTeam(slug) {
     .filter(([, , u]) => u).map(([icon, l, u]) => `<a class="link-tile" href="${esc(u)}" target="_blank" rel="noopener"><span class="ico">${icon}</span>
       <span class="txt"><b>${l}</b><small>${esc(hostOf(u))}</small></span><span class="go">↗</span></a>`).join("");
   const ytId = youtubeId(t.demoLink);
-  const demo = ytId ? `<div class="card team-sec"><div class="card-h"><h2>${L.demo}</h2></div><div class="card-c"><div class="demo-frame"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" title="${esc(t.name)} ${L.demo}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div></div></div>` : "";
-  const project = t.projectEmbed ? `<div class="card team-sec"><div class="card-h"><h2>${L.project}</h2></div><div class="card-c"><div class="demo-frame site"><iframe src="${esc(t.projectLink)}" title="${esc(t.name)} ${L.project}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div></div>` : "";
+  // 데모·프로젝트 iframe 카드: 제목 줄의 버튼으로 화면 가득 확대한다. 같은 요소를 CSS로 키우므로 iframe 이 다시 불러와지지 않는다.
+  const zoomCard = (title, frame) => `<div class="card team-sec zoomable"><div class="card-h zoom-h"><h2>${title}</h2><button type="button" class="zoom-btn" title="${L.zoom}" aria-label="${L.zoom}"><span class="z-in">${ZoomIcon.IN}</span><span class="z-out">${ZoomIcon.OUT}</span></button></div><div class="card-c">${frame}</div></div>`;
+  const demo = ytId ? zoomCard(L.demo, `<div class="demo-frame"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" title="${esc(t.name)} ${L.demo}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`) : "";
+  const project = t.projectEmbed ? zoomCard(L.project, `<div class="demo-frame site"><iframe src="${esc(t.projectLink)}" title="${esc(t.name)} ${L.project}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div>`) : "";
   app.innerHTML = `<a class="back" href="${mission ? `/mission/${encodeURIComponent(mission.slug)}` : "/stats"}">← ${esc(missionText)}</a><h1>${esc(t.name)}</h1>
     <div class="grid">${cards}</div>
     <div class="card team-sec"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>
-    <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>${demo}${project}`;
+    <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>${demo || project ? `<div class="team-pair">${demo}${project}</div>` : ""}`;
   loadTeamIntro(slug);
 }
 // 소개 글·이미지는 팀별 JSON(data/teams/<슬러그>.json)을 이 페이지를 열 때 하나만 불러온다. 파일이 없으면 소개가 없는 팀이다.
@@ -246,6 +252,12 @@ async function loadTeamIntro(slug) {
   if (!box || box.dataset.slug !== slug) return;  // 그 사이 다른 화면으로 이동했다
   box.innerHTML = `<div class="team-intro">${d?.image ? `<img class="team-img" src="${esc(d.image)}" alt="${esc(TEAM_BY_SLUG.get(slug).name)}">` : ""}
     ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>`;
+  // 프로젝트 탭의 글은 있는 팀에만 보인다. 요약은 데모 위(소개 카드 바로 뒤), 나머지는 맨 아래에 붙인다. details 는 build 단계에서 허용 태그만 남긴 HTML이다.
+  if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec"><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
+  if (d?.details) app.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c project-details">${d.details}</div></div>`);
+  const refCard = (title, refs) => refs?.length && app.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${title}</h2></div><div class="card-c"><ul class="ref-list">${refs.map(([name, url]) => `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a></li>`).join("")}</ul></div></div>`);
+  refCard(L.dataRefs, d?.dataRefs);
+  refCard(L.projectRefs, d?.projectRefs);
 }
 
 /* ---------- 통계 ---------- */
@@ -418,6 +430,7 @@ function renderLicense() {
 /* ---------- 라우터 ---------- */
 let lastView = "";
 function route() {
+  syncZoomLock();  // 확대한 채 다른 화면으로 가면 카드가 사라지므로 스크롤 잠금도 푼다
   const [, kind, slug, p] = location.pathname.split("/").map(decodeURIComponent);
   const view = `${kind}/${slug}`;
   if (view !== lastView) scrollTo(0, 0);  // 다른 화면으로 갈 때만 맨 위로
@@ -439,6 +452,32 @@ document.addEventListener("click", e => {
   if (row && !e.target.closest("a, button, [data-region]") && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { go(row.dataset.href); return; }
   const b = e.target.closest("#list button[data-p]");
   if (b && !b.disabled) go(`/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`);
+});
+// 데모·프로젝트 카드 확대/축소 (Esc 로도 닫는다)
+// 확대 중에는 뒤 페이지가 스크롤되지 않게 잠근다. 스크롤바가 사라지며 화면이 밀리지 않도록 그 폭만큼 오른쪽을 채운다.
+function syncZoomLock() {
+  const root = document.documentElement, on = !!document.querySelector(".zoomable.zoomed");
+  root.style.paddingRight = on ? `${innerWidth - root.clientWidth}px` : "";
+  root.classList.toggle("zoom-lock", on);
+}
+const setZoom = (card, on) => {
+  const apply = () => {
+    card.classList.toggle("zoomed", on);
+    const b = card.querySelector(".zoom-btn");
+    b.title = b.ariaLabel = on ? L.unzoom : L.zoom;
+    syncZoomLock();
+  };
+  // 히어로 애니메이션: View Transitions 로 카드가 제자리에서 화면 가득까지(또는 그 반대로) 이어서 변한다. 미지원·모션 줄이기면 바로 바꾼다.
+  if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return apply();
+  card.style.viewTransitionName = "zoom-card";
+  document.startViewTransition(apply).finished.finally(() => { card.style.viewTransitionName = ""; });
+};
+document.addEventListener("click", e => {
+  const b = e.target.closest(".zoom-btn");
+  if (b) { const c = b.closest(".zoomable"); setZoom(c, !c.classList.contains("zoomed")); }
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.querySelectorAll(".zoomable.zoomed").forEach(c => setZoom(c, false));
 });
 addEventListener("popstate", route);
 $("lang").addEventListener("click", () => {

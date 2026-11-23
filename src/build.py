@@ -5,6 +5,7 @@ from datetime import date
 from pathlib import Path
 from crawl import BASE, CACHE, ROOT, is_submitted, stage_challenges
 from stamp import stamp
+from extract_project import extract as extract_project
 
 OVERRIDES = json.loads((Path(__file__).parent / "source_overrides.json").read_text())
 GITHUB_WEB = json.loads((Path(__file__).parent / "github_web.json").read_text())  # resolve_github_web.py 결과
@@ -12,6 +13,7 @@ EMBEDDABLE = set(json.loads((Path(__file__).parent / "embeddable.json").read_tex
 VIRTUAL = "Virtual"
 EXTRACTED = CACHE / "extracted.json"  # extract_html.py 결과 (팀 소개 글·이미지, 챌린지 이미지)
 TEAM_DIR = ROOT / "data" / "teams"  # 팀 페이지를 열 때 하나씩 불러오는 팀별 소개 JSON
+PROJECT_SLUGS = {"go24"}  # 프로젝트 탭의 Summary·Details 를 함께 담을 팀 (시험 삼아 서울 🐱 팀만)
 
 
 def slug_of(path):
@@ -19,13 +21,16 @@ def slug_of(path):
 
 
 def write_team_details(rows, teams):
-    """data/teams/<슬러그>.json = {description, image}. 소개도 이미지도 없는 팀은 파일을 만들지 않는다."""
+    """data/teams/<슬러그>.json = {description, image[, summary, details]}. 소개도 이미지도 없는 팀은 파일을 만들지 않는다."""
     shutil.rmtree(TEAM_DIR, ignore_errors=True)
     TEAM_DIR.mkdir(parents=True)
     count = 0
     for r in rows:
         e = teams.get(slug_of(r["path"]))
         d = {"description": e["description"], "image": e["image"]["url"] if e["image"] else None} if e else None
+        if d and slug_of(r["path"]) in PROJECT_SLUGS:
+            page = CACHE / "html" / "teams" / f"{slug_of(r['path'])}.html"
+            d.update(extract_project(page.read_text()) or {})
         if d and (d["description"] or d["image"]):
             (TEAM_DIR / f"{slug_of(r['path'])}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
             count += 1
