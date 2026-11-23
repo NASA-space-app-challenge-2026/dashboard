@@ -126,7 +126,7 @@
 |---|---|---|---|---|
 | [Abang Abang](https://www.spaceappschallenge.org/2026/find-a-team/abang-abang/) | 1 | [소개](https://abang.earth/deck/abang-on-earth-deck.pdf) | [데모](https://abang.earth) | [GitHub](https://github.com/damanikjosh/abang_on_earth) |
 | [JJYa](https://www.spaceappschallenge.org/2026/find-a-team/byeolyibyeol-saramdeul/) | 4 | [소개](https://drive.google.com/drive/folders/1Ty2JiiWFBQieMUEwMtGph4hfjJkWPblc?usp=sharing) | [데모](https://hwaruruk.unzipp.cloud/en) | - |
-| [Planetarium](https://www.spaceappschallenge.org/2026/find-a-team/planetarium2/) | 5 | [소개](https://youtu.be/vaAn3TwZDC8) | [데모](https://nasa-planetarium.github.io) | - |
+| [Planetarium](https://www.spaceappschallenge.org/2026/find-a-team/planetarium2/) | 5 | [소개](https://youtu.be/vaAn3TwZDC8) | [데모](https://nasa-planetarium.github.io) | [GitHub](https://github.com/Nasa-Planetarium/nasa-planetarium.github.io) |
 | [Red Soups(김칫국물)](https://www.spaceappschallenge.org/2026/find-a-team/red-soupsgimcisgugmul/) | 4 | [소개](https://drive.google.com/drive/folders/1e28W4qw3CbXDUryW3BFsZO8VQC_Sf9TW?usp=drive_link) | [데모](https://sanbool24.howeve18.workers.dev/) | - |
 | [Screaming Marshmallow](https://www.spaceappschallenge.org/2026/find-a-team/screaming-marshmallow/) | 5 | [소개](https://www.figma.com/deck/5MeJ1rFOqw0lFNRzm8u6tL) | [데모](https://too-hot-to-ignore.35.208.171.178.sslip.io/?view=home) | - |
 
