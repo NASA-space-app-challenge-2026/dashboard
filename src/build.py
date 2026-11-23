@@ -19,12 +19,24 @@ def ghio_owner(url):
     return m.group(1).lower() if m else None
 
 
+def ghio_repo(url):
+    """owner.github.io/repo/ → owner/repo, owner.github.io (루트) → owner/owner.github.io."""
+    m = re.match(r'https?://([^./]+)\.github\.io(?:/([^/?#]+))?', url or "")
+    if not m:
+        return None
+    return f"{m[1]}/{m[2] or m[1] + '.github.io'}"
+
+
 def pick_source(web, intro, repos):
-    """소스 저장소: 링크 필드의 GitHub → 같은 소유자의 github.io 데모 → 없음."""
+    """소스 저장소: 링크 필드의 GitHub → github.io 주소에서 추론 → 같은 소유자의 상세 페이지 저장소 → 없음."""
     for u in (web, intro):
         r = repo_of(u)
         if r:
             return f"{r[0]}/{r[1]}"
+    for u in (web, intro):
+        r = ghio_repo(u)
+        if r:
+            return r
     owners = {ghio_owner(web), ghio_owner(intro)} - {None}
     return next((r for r in repos if r.split("/")[0].lower() in owners), None)
 
@@ -50,14 +62,13 @@ def main():
         pf = CACHE / "pages" / f"{key}.json"
         page = json.loads(pf.read_text()) if pf.exists() else {"members": None, "repos": []}
         pd = n["projectDetails"] or {}
-        intro, web = pd.get("demoLink") or None, pd.get("projectLink") or None
-        src = OVERRIDES.get(rel) or pick_source(web, intro, page["repos"])
-        is_demo = web and not repo_of(web) and "drive.google.com" not in web
+        demo, project = pd.get("demoLink") or None, pd.get("projectLink") or None
+        src = OVERRIDES.get(rel) or pick_source(project, demo, page["repos"])
         rows.append({
             "name": n["title"], "members": page["members"],
             "challenge": (n["challengeDetails"] or {}).get("title") or "(미지정)",
             "region": region, "country": country, "path": rel,
-            "introLink": intro, "demoLink": web if is_demo else None,
+            "demoLink": demo, "projectLink": project,
             "sourceLink": f"https://github.com/{src}" if src else None,
         })
 

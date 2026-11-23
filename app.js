@@ -24,14 +24,14 @@ const STRINGS = {
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
-    teamPage: "팀 페이지", intro: "소개", demo: "데모", source: "소스",
+    teamPage: "팀 페이지", demo: "Demo", project: "Project", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
     stats: "통계", statsLead: date => `기준일 ${date}`,
     cardTotal: "전체 등록 팀", cardSubmitted: "최종 제출 팀", cardRate: pct => `제출률 ${pct}%`,
     cardPeople: "제출 팀 인원", cardAvg: avg => `팀당 평균 ${avg}명`,
     cardRegions: "지역 수", cardCountries: "참가 국가 수", cardMissions: "미션 수",
-    cardDemo: "웹 데모 있는 팀", cardGithub: "GitHub 있는 팀",
+    cardGithub: "GitHub 있는 팀",
     distTitle: "팀원 수 분포", distSub: "제출 팀 기준", byMissionSub: "팀 수 많은 순",
     regionsTitle: "지역별 현황", searchPh: "지역 또는 국가 검색 (예: Seoul)",
     regionsSub: (count, size) => `${count}개 지역 · 열 제목을 누르면 정렬 · ${size}개씩`,
@@ -57,14 +57,14 @@ const STRINGS = {
     back: "← Stats", notFound: "Mission not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official mission page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
-    teamPage: "Team page", intro: "Intro", demo: "Demo", source: "Source",
+    teamPage: "Team page", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
     stats: "Stats", statsLead: date => `As of ${date}`,
     cardTotal: "Registered teams", cardSubmitted: "Final submitted teams", cardRate: pct => `${pct}% submitted`,
     cardPeople: "Members on submitted teams", cardAvg: avg => `${avg} per team on average`,
     cardRegions: "Regions", cardCountries: "Participating countries", cardMissions: "Missions",
-    cardDemo: "Teams with web demo", cardGithub: "Teams with GitHub",
+    cardGithub: "Teams with GitHub",
     distTitle: "Team size distribution", distSub: "Submitted teams", byMissionSub: "Most teams first",
     regionsTitle: "Regions", searchPh: "Search region or country (e.g. Seoul)",
     regionsSub: (count, size) => `${count} regions · click a column header to sort · ${size} per page`,
@@ -159,11 +159,11 @@ function renderMission(slug, pageParam) {
   const rows = pageTeams.map((t, i) => `<tr>
     <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="${BASE + esc(t.path)}" target="_blank" rel="noopener">${esc(t.name)}</a></td>
     <td title="${esc(L.clickRegionHint)}"><span class="rgn" data-region="${esc(t.region)}">${esc(t.region)}</span></td><td class="num">${t.members ?? "-"}</td>
-    <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.intro, t.introLink)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + blankRows(pageTeams.length, 8);
+    <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + blankRows(pageTeams.length, 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
   $("list").innerHTML = teams.length ? `${pager}<div class="mission-t"><div class="tw" style="border:0"><table>
     <colgroup><col style="width:64px"><col><col style="width:18%"><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
-    <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.intro}</th><th class="num">${L.demo}</th><th class="num">${L.source}</th></tr></thead>
+    <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead>
     <tbody>${rows}</tbody></table></div></div>` : `<div class="empty">${mounted.all.length ? L.noTeamMatch : L.noTeams}</div>`;
 }
 // 지역/검색어 필터를 적용하고 1페이지부터 다시 그린다 (입력할 때마다 기록이 쌓이지 않도록 replaceState)
@@ -191,7 +191,7 @@ function renderStats() {
     [n(D.totalTeams), L.cardTotal], [n(T.length), L.cardSubmitted, L.cardRate(Math.round(T.length / D.totalTeams * 100))],
     [n(people), L.cardPeople, L.cardAvg((people / T.length).toFixed(1))],
     [n(byRegion.size), L.cardRegions], [n(new Set(T.map(t => t.country).filter(c => c && c !== "Anywhere in the World")).size), L.cardCountries], [n(byChallenge.size), L.cardMissions],
-    [n(T.filter(t => t.demoLink).length), L.cardDemo], [n(T.filter(t => t.sourceLink).length), L.cardGithub]
+    [n(T.filter(t => t.sourceLink).length), L.cardGithub]
   ].map(([v, l, s]) => `<div class="card stat"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ""}</div>`).join("");
   const bars = (rows, fmt) => { const max = Math.max(...rows.map(r => r[1]));
     return rows.map(([l, v]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${v / max * 100}%"></i></span><span class="v">${fmt(v)}</span></div>`).join(""); };
@@ -247,12 +247,12 @@ function renderRegionList() {
 
 const REGION_OPEN_MAX = 100;  // 제출 팀이 이 수 이하인 지역은 미션 목록을 처음부터 펼친다
 const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td><a class="name" href="${BASE + esc(t.path)}" target="_blank" rel="noopener">${esc(t.name)}</a></td>
-  <td class="num">${t.members ?? "-"}</td><td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.intro, t.introLink)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`;
+  <td class="num">${t.members ?? "-"}</td><td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`;
 const fillMission = d => {  // 표는 처음 펼칠 때 한 번만 그린다 (팀이 수천 개인 지역 대비)
   if (d.dataset.filled) return;
   d.dataset.filled = "1";
   d.querySelector(".tw").innerHTML = `<table><colgroup><col style="width:64px"><col><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
-    <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.intro}</th><th class="num">${L.demo}</th><th class="num">${L.source}</th></tr></thead>
+    <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead>
     <tbody>${regionTeams.get(d.dataset.title).map(teamRow).join("")}</tbody></table>`;
 };
 const ACCORDION_MS = 250;
@@ -286,7 +286,7 @@ function renderRegion(name) {
   const cards = [
     [n(region.teams), L.cardTotal], [n(teams.length), L.cardSubmitted, L.cardRate(Math.round(region.rate * 100))],
     [n(people), L.cardPeople, teams.length ? L.cardAvg((people / teams.length).toFixed(1)) : ""],
-    [n(byMission.size), L.cardMissions], [n(teams.filter(t => t.demoLink).length), L.cardDemo], [n(teams.filter(t => t.sourceLink).length), L.cardGithub]
+    [n(byMission.size), L.cardMissions], [n(teams.filter(t => t.sourceLink).length), L.cardGithub]
   ].map(([v, l, s]) => `<div class="card stat"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ""}</div>`).join("");
   const open = teams.length <= REGION_OPEN_MAX ? "open" : "";
   const missions = [...byMission].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])).map(([title, ts]) => {
