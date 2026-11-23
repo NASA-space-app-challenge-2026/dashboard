@@ -336,7 +336,7 @@ function renderRegion(name) {
   const open = teams.length <= REGION_OPEN_MAX ? "open" : "";
   const missions = [...byMission].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])).map(([title, ts]) => {
     const c = CH_BY_TITLE.get(title);
-    return `<details ${open} data-title="${esc(title)}"><summary><span class="sum-t"><span>${esc(c ? mText(c, "title") : title)}</span>${c ? `<small>${esc(mText(c, "summary") || mText(c, "excerpt"))}</small>` : ""}</span>
+    return `<details ${open} data-title="${esc(title)}"><summary>${c?.image ? `<img class="mission-thumb" src="${esc(c.image)}" alt="" loading="lazy">` : ""}<span class="sum-t"><span>${esc(c ? mText(c, "title") : title)}</span>${c ? `<small>${esc(mText(c, "summary") || mText(c, "excerpt"))}</small>` : ""}</span>
       ${c ? `<a class="badge badge-lk" href="${BASE + esc(c.path)}" target="_blank" rel="noopener">${L.official}</a>` : ""}<span class="badge">${L.badge(n(ts.length), n(ts.reduce((a, t) => a + (t.members || 0), 0)))}</span></summary><div class="tw"></div></details>`;
   }).join("");
   app.innerHTML = `<a class="back" href="/regions">${L.regionBack}</a><h1>${esc(region.name)}</h1><p class="lead">${esc(region.country)}</p>

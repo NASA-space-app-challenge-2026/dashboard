@@ -74,8 +74,8 @@ details{margin-bottom:20px}
 summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:14px 18px;
   border:1px solid hsl(var(--border));border-radius:calc(var(--radius) + 2px);font-size:18px;font-weight:600}
 summary:hover{background:var(--glass-hover)}
-summary::before{content:"▸";color:hsl(var(--muted-foreground));font-size:14px;transition:transform .25s ease}
-details[open]:not(.shut)>summary::before{transform:rotate(90deg)}
+summary::after{flex:none;content:"▸";color:hsl(var(--muted-foreground));font-size:14px;transition:transform .25s ease}
+details[open]:not(.shut)>summary::after{transform:rotate(90deg)}
 details[open]>summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
 summary .badge{margin-left:auto;flex-shrink:0}
 summary .badge+.badge{margin-left:0}
