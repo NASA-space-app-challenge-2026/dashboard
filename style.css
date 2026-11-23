@@ -37,7 +37,8 @@ h1{font-size:32px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
 .card-h p{margin:4px 0 0;color:hsl(var(--muted-foreground));font-size:15px}
 .card-c{padding:20px 24px 24px}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+.grid3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.grid,.grid3{grid-template-columns:repeat(2,1fr)}}
 .stat{padding:18px 20px}
 .stat span{display:block;font-size:15px;color:hsl(var(--muted-foreground));font-weight:500}
 .stat b{display:inline-block;font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:2px}
@@ -113,3 +114,7 @@ button.more:disabled{opacity:.4;cursor:not-allowed}
 .pager button[data-p]:not(:first-child):not(:last-of-type){width:44px;padding:0}
 .pager .gap{width:44px;text-align:center}
 tbody tr{height:40px}
+
+/* region page */
+.sec-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 14px}.sec-h h2.sec{margin:0}.sec-h button.more{margin:0 0 0 8px;height:34px}
+h2.sec{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:8px 0 14px}

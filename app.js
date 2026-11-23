@@ -1,16 +1,15 @@
-// 해시 라우팅 SPA: #/stats (기본), #/missions, #/mission/<slug>/<page>
+// 해시 라우팅 SPA: #/stats (기본), #/mission/<slug>/<page>, #/regions, #/region/<소문자-하이픈 이름>
 const BASE = "https://www.spaceappschallenge.org";
 const PAGE_SIZE = 20;
-const Nav = Object.freeze({ MISSIONS: "missions", STATS: "stats" });
+const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions" });
 const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", navStats: "통계", navMissions: "미션",
-    missionsTitle: "미션별 제출 팀", mission: "미션",
-    missionsLead: (date, teams) => `기준일 ${date} · 최종 제출 팀 ${teams}팀`,
+    langToggle: "EN", navStats: "통계", navRegions: "지역",
+    missionsTitle: "미션별 제출 팀", missionListTitle: "미션 목록", mission: "미션",
     badge: (teams, members) => `${teams}팀 · ${members}명`,
-    back: "← 미션 목록", notFound: "존재하지 않는 미션입니다.",
+    back: "← 통계", notFound: "존재하지 않는 미션입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.",
     teamPage: "팀 페이지", intro: "소개", demo: "데모", source: "소스",
@@ -25,14 +24,15 @@ const STRINGS = {
     regionsTitle: "지역별 현황", searchPh: "지역 또는 국가 검색 (예: Seoul)",
     regionsSub: (count, size) => `${count}개 지역 · 열 제목을 누르면 정렬 · ${size}개씩`,
     unitPeople: k => `${k}명`, unitTeams: v => `${v}팀`,
+    regionBack: "← 지역 목록", regionNotFound: "존재하지 않는 지역입니다.", regionsLead: date => `기준일 ${date} · 지역을 누르면 미션별 제출 팀을 볼 수 있습니다`,
+    regionMissionsTitle: "미션별 제출 팀", expandAll: "모두 펼치기", collapseAll: "모두 접기", noRegionTeams: "이 지역에서 제출한 팀이 없습니다.",
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", navStats: "Stats", navMissions: "Missions",
-    missionsTitle: "Submitted Teams by Mission", mission: "Mission",
-    missionsLead: (date, teams) => `As of ${date} · ${teams} final submitted teams`,
+    langToggle: "한국어", navStats: "Stats", navRegions: "Regions",
+    missionsTitle: "Submitted Teams by Mission", missionListTitle: "Missions", mission: "Mission",
     badge: (teams, members) => `${teams} teams · ${members} members`,
-    back: "← Missions", notFound: "Mission not found.",
+    back: "← Stats", notFound: "Mission not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official mission page ↗", noTeams: "No teams have submitted.",
     teamPage: "Team page", intro: "Intro", demo: "Demo", source: "Source",
@@ -47,6 +47,8 @@ const STRINGS = {
     regionsTitle: "Regions", searchPh: "Search region or country (e.g. Seoul)",
     regionsSub: (count, size) => `${count} regions · click a column header to sort · ${size} per page`,
     unitPeople: k => `${k} members`, unitTeams: v => `${v} teams`,
+    regionBack: "← Regions", regionNotFound: "Region not found.", regionsLead: date => `As of ${date} · pick a region to see its submitted teams by mission`,
+    regionMissionsTitle: "Submitted Teams by Mission", expandAll: "Expand all", collapseAll: "Collapse all", noRegionTeams: "No teams from this region have submitted.",
     loadErr: "Failed to load data/teams.js. Run src/build.py."
   }
 };
@@ -62,10 +64,11 @@ const CH_BY_TITLE = new Map(D.challenges.map(c => [c.title, c]));
 // 미션 표시용 번역 (key: "title" | "excerpt"). 번역이 없으면 원문. 필터/매칭은 항상 원문 title 로 한다.
 const mText = (c, key) => (lang === Lang.KO && KO_MISSIONS[c.slug]?.[key]) || c[key];
 const app = $("app");
+const cell = (l, u) => u ? `<a class="lk" href="${esc(u)}" target="_blank" rel="noopener">${l}</a>` : `<span class="no">-</span>`;
 const count = (arr, f) => arr.reduce((m, x) => (m.set(f(x), (m.get(f(x)) || 0) + 1), m), new Map());
 const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 const setView = (nav, title) => {
-  document.title = `${title} · NASA Space Apps 2026`;
+  document.title = `${title} · NASA Space Apps Challenge 2026`;
   document.documentElement.lang = lang;
   $("lang-label").textContent = L.langToggle;
   document.querySelectorAll("nav a").forEach(a => { a.textContent = L[a.dataset.label]; });
@@ -90,57 +93,54 @@ const pagerHtml = (page, pages, total, size) => {
     <span class="info">${total ? start + 1 : 0}–${Math.min(start + size, total)} / ${n(total)}</span></div>`;
 };
 
-/* ---------- 미션 목록 ---------- */
-function renderMissions() {
-  setView(Nav.MISSIONS, L.missionsTitle);
+/* ---------- 미션 목록 (통계 탭에 포함) ---------- */
+function missionRows() {
   const stat = new Map();
   T.forEach(t => {
     const s = stat.get(t.challenge) || stat.set(t.challenge, { teams: 0, members: 0 }).get(t.challenge);
     s.teams++; s.members += t.members || 0;
   });
-  const rows = [...D.challenges].sort((a, b) => (stat.get(b.title)?.teams || 0) - (stat.get(a.title)?.teams || 0))
+  return [...D.challenges].sort((a, b) => (stat.get(b.title)?.teams || 0) - (stat.get(a.title)?.teams || 0))
     .map(c => {
       const s = stat.get(c.title) || { teams: 0, members: 0 };
       return `<a class="mission-row" href="#/mission/${encodeURIComponent(c.slug)}">${esc(mText(c, "title"))}
         <span class="badge">${L.badge(n(s.teams), n(s.members))}</span></a>`;
     }).join("");
-  app.innerHTML = `<h1>${L.missionsTitle}</h1>
-    <p class="lead">${L.missionsLead(D.generatedAt, n(T.length))}</p>${rows}`;
 }
 
 /* ---------- 미션 상세 ---------- */
 let mounted = null;  // { slug, teams, pages }
 function renderMission(slug, pageParam) {
   const mission = D.challenges.find(c => c.slug === slug);
-  if (!mission) { mounted = null; setView(Nav.MISSIONS, L.mission); app.innerHTML = `<a class="back" href="#/missions">${L.back}</a><div class="empty">${L.notFound}</div>`; return; }
-  setView(Nav.MISSIONS, mText(mission, "title"));
+  if (!mission) { mounted = null; setView(Nav.STATS, L.mission); app.innerHTML = `<a class="back" href="#/stats">${L.back}</a><div class="empty">${L.notFound}</div>`; return; }
+  setView(Nav.STATS, mText(mission, "title"));
   if (mounted?.slug !== slug) {  // 같은 미션 안에서 페이지만 바뀔 때는 머리글을 다시 그리지 않는다
     const teams = T.filter(t => t.challenge === mission.title).sort((a, b) => a.name.localeCompare(b.name));
     mounted = { slug, teams, pages: Math.max(1, Math.ceil(teams.length / PAGE_SIZE)) };
-    app.innerHTML = `<a class="back" href="#/missions">${L.back}</a><h1>${esc(mText(mission, "title"))}</h1>
+    app.innerHTML = `<a class="back" href="#/stats">${L.back}</a><h1>${esc(mText(mission, "title"))}</h1>
       <p class="lead">${L.detailLead(n(teams.length), n(teams.reduce((a, t) => a + (t.members || 0), 0)))}</p>
       <p class="desc">${esc(mText(mission, "excerpt"))}</p>
       <a class="ext" href="${BASE + esc(mission.path)}" target="_blank" rel="noopener">${L.official}</a>
       <div id="list"></div>`;
   }
   const { teams, pages } = mounted, page = clamp(pageParam, 1, pages);
-  const cell = (l, u) => u ? `<a class="lk" href="${esc(u)}" target="_blank" rel="noopener">${l}</a>` : `<span class="no">-</span>`;
   const pageTeams = teams.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const rows = pageTeams.map(t => `<tr>
-    <td><a class="name" href="${BASE + esc(t.path)}" target="_blank" rel="noopener">${esc(t.name)}</a></td>
+  const rows = pageTeams.map((t, i) => `<tr>
+    <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="${BASE + esc(t.path)}" target="_blank" rel="noopener">${esc(t.name)}</a></td>
     <td title="${esc(t.region)}">${esc(t.region)}</td><td class="num">${t.members ?? "-"}</td>
-    <td>${cell(L.teamPage, BASE + t.path)}</td><td>${cell(L.intro, t.introLink)}</td><td>${cell(L.demo, t.demoLink)}</td><td>${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + blankRows(pageTeams.length, 7);
+    <td>${cell(L.teamPage, BASE + t.path)}</td><td>${cell(L.intro, t.introLink)}</td><td>${cell(L.demo, t.demoLink)}</td><td>${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + blankRows(pageTeams.length, 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
   $("list").innerHTML = teams.length ? `${pager}<div class="mission-t"><div class="tw" style="border:0"><table>
-    <colgroup><col><col style="width:18%"><col style="width:80px"><col style="width:104px"><col style="width:104px"><col style="width:104px"><col style="width:104px"></colgroup>
-    <thead><tr><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th>${L.teamPage}</th><th>${L.intro}</th><th>${L.demo}</th><th>${L.source}</th></tr></thead>
+    <colgroup><col style="width:64px"><col><col style="width:18%"><col style="width:80px"><col style="width:104px"><col style="width:104px"><col style="width:104px"><col style="width:104px"></colgroup>
+    <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th>${L.teamPage}</th><th>${L.intro}</th><th>${L.demo}</th><th>${L.source}</th></tr></thead>
     <tbody>${rows}</tbody></table></div></div>` : `<div class="empty">${L.noTeams}</div>`;
 }
 
 /* ---------- 통계 ---------- */
 const reg = { sortKey: "submitted", sortDir: -1, page: 1, q: "" };
 const COLS = [["name", "region", ""], ["country", "country", ""], ["teams", "teamsReg", "r"], ["submitted", "teamsSub", "r"], ["rate", "rate", "r"]];
-const REG = D.regions.map(r => ({ ...r, rate: r.submitted / r.teams }));
+const regionSlug = name => name.toLowerCase().trim().replace(/\s+/g, "-");  // URL용 소문자 키 (예: "Abu Dhabi" -> "abu-dhabi")
+const REG = D.regions.map(r => ({ ...r, slug: regionSlug(r.name), rate: r.submitted / r.teams }));
 
 function renderStats() {
   mounted = null;
@@ -162,10 +162,15 @@ function renderStats() {
       <div class="card"><div class="card-h"><h2>${L.distTitle}</h2><p>${L.distSub}</p></div><div class="card-c">${bars([...dist].sort((a, b) => a[0] - b[0]).map(([k, v]) => [L.unitPeople(k), v]), v => L.unitTeams(n(v)))}</div></div>
       <div class="card"><div class="card-h"><h2>${L.missionsTitle}</h2><p>${L.byMissionSub}</p></div><div class="card-c">${bars([...byChallenge].sort((a, b) => b[1] - a[1]).map(([t, v]) => [CH_BY_TITLE.has(t) ? mText(CH_BY_TITLE.get(t), "title") : t, v]), v => L.unitTeams(n(v)))}</div></div>
     </div>
-    <div class="card"><div class="card-h" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px"><div><h2>${L.regionsTitle}</h2><p id="rsub"></p></div>
+    <h2 class="sec">${L.missionListTitle}</h2>${missionRows()}`;
+}
+
+// 지역 표 카드: 통계 탭과 지역 탭이 함께 쓴다
+const regionsCard = () => `<div class="card"><div class="card-h" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px"><div><h2>${L.regionsTitle}</h2><p id="rsub"></p></div>
         <input id="rq" type="search" placeholder="${L.searchPh}" style="flex:none;width:100%;max-width:360px" value="${esc(reg.q)}"></div>
       <div class="card-c" style="padding-top:12px">
       <div id="regtable"></div></div></div>`;
+function bindRegions() {
   $("rq").addEventListener("input", e => { reg.q = e.target.value.trim().toLowerCase(); reg.page = 1; renderRegions(); });
   $("regtable").addEventListener("click", e => {
     const b = e.target.closest("button[data-p]"), th = e.target.closest("th[data-k]");
@@ -190,7 +195,52 @@ function renderRegions() {
   $("regtable").innerHTML = `${pagerHtml(page, pages, rows.length, PAGE_SIZE)}<div style="overflow-x:auto"><table style="min-width:640px;table-layout:fixed">
     <colgroup><col style="width:7%"><col style="width:27%"><col style="width:23%"><col style="width:14%"><col style="width:14%"><col style="width:15%"></colgroup>
     <thead><tr><th class="num">${L.no}</th>${COLS.map(([k, l, c]) => `<th class="${c}" data-k="${k}" style="cursor:pointer">${L[l]}${sortKey === k ? (sortDir < 0 ? " ↓" : " ↑") : ""}</th>`).join("")}</tr></thead>
-    <tbody>${pageRows.map((r, i) => `<tr><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td>${esc(r.name)}</td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
+    <tbody>${pageRows.map((r, i) => `<tr><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="#/region/${encodeURIComponent(r.slug)}">${esc(r.name)}</a></td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
+}
+
+/* ---------- 지역 ---------- */
+function renderRegionList() {
+  setView(Nav.REGIONS, L.navRegions);
+  app.innerHTML = `<h1>${L.navRegions}</h1><p class="lead">${L.regionsLead(D.generatedAt)}</p>${regionsCard()}`;
+  bindRegions();
+}
+
+const REGION_OPEN_MAX = 100;  // 제출 팀이 이 수 이하인 지역은 미션 목록을 처음부터 펼친다
+const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td><a class="name" href="${BASE + esc(t.path)}" target="_blank" rel="noopener">${esc(t.name)}</a></td>
+  <td class="num">${t.members ?? "-"}</td><td>${cell(L.teamPage, BASE + t.path)}</td><td>${cell(L.intro, t.introLink)}</td><td>${cell(L.demo, t.demoLink)}</td><td>${cell("GitHub", t.sourceLink)}</td></tr>`;
+const fillMission = d => {  // 표는 처음 펼칠 때 한 번만 그린다 (팀이 수천 개인 지역 대비)
+  if (d.dataset.filled) return;
+  d.dataset.filled = "1";
+  d.querySelector(".tw").innerHTML = `<table><colgroup><col style="width:64px"><col><col style="width:80px"><col style="width:104px"><col style="width:104px"><col style="width:104px"><col style="width:104px"></colgroup>
+    <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th class="num">${L.members}</th><th>${L.teamPage}</th><th>${L.intro}</th><th>${L.demo}</th><th>${L.source}</th></tr></thead>
+    <tbody>${regionTeams.get(d.dataset.title).map(teamRow).join("")}</tbody></table>`;
+};
+let regionTeams = new Map();  // 현재 지역의 미션 title -> 팀 목록 (이름순)
+function renderRegion(name) {
+  mounted = null;
+  const region = REG.find(r => r.slug === regionSlug(name));
+  if (!region) { setView(Nav.REGIONS, L.navRegions); app.innerHTML = `<a class="back" href="#/regions">${L.regionBack}</a><div class="empty">${L.regionNotFound}</div>`; return; }
+  setView(Nav.REGIONS, region.name);
+  const teams = T.filter(t => t.region === region.name);
+  const people = teams.reduce((a, t) => a + (t.members || 0), 0);
+  const byMission = new Map();
+  teams.forEach(t => (byMission.get(t.challenge) || byMission.set(t.challenge, []).get(t.challenge)).push(t));
+  byMission.forEach(ts => ts.sort((a, b) => a.name.localeCompare(b.name)));
+  regionTeams = byMission;
+  const cards = [
+    [n(region.teams), L.cardTotal], [n(teams.length), L.cardSubmitted, L.cardRate(Math.round(region.rate * 100))],
+    [n(people), L.cardPeople, teams.length ? L.cardAvg((people / teams.length).toFixed(1)) : ""],
+    [n(byMission.size), L.cardMissions], [n(teams.filter(t => t.demoLink).length), L.cardDemo], [n(teams.filter(t => t.sourceLink).length), L.cardGithub]
+  ].map(([v, l, s]) => `<div class="card stat"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ""}</div>`).join("");
+  const open = teams.length <= REGION_OPEN_MAX ? "open" : "";
+  const missions = [...byMission].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])).map(([title, ts]) =>
+    `<details ${open} data-title="${esc(title)}"><summary>${esc(CH_BY_TITLE.has(title) ? mText(CH_BY_TITLE.get(title), "title") : title)}
+      <span class="badge">${L.badge(n(ts.length), n(ts.reduce((a, t) => a + (t.members || 0), 0)))}</span></summary><div class="tw"></div></details>`).join("");
+  app.innerHTML = `<a class="back" href="#/regions">${L.regionBack}</a><h1>${esc(region.name)}</h1><p class="lead">${esc(region.country)}</p>
+    <div class="grid grid3">${cards}</div><div class="sec-h"><h2 class="sec">${L.regionMissionsTitle}</h2>${teams.length ? `<span><button class="more" data-all="1">${L.expandAll}</button><button class="more" data-all="0">${L.collapseAll}</button></span>` : ""}</div>
+    ${teams.length ? missions : `<div class="empty">${L.noRegionTeams}</div>`}`;
+  app.querySelectorAll("button[data-all]").forEach(b => b.addEventListener("click", () => app.querySelectorAll("details").forEach(d => d.open = b.dataset.all === "1")));
+  app.querySelectorAll("details").forEach(d => { if (d.open) fillMission(d); d.addEventListener("toggle", () => d.open && fillMission(d)); });
 }
 
 /* ---------- 라우터 ---------- */
@@ -201,7 +251,8 @@ function route() {
   if (view !== lastView) scrollTo(0, 0);  // 다른 화면으로 갈 때만 맨 위로
   lastView = view;
   if (kind === "mission" && slug) renderMission(slug, parseInt(p, 10) || 1);
-  else if (kind === "missions") { mounted = null; renderMissions(); }
+  else if (kind === "region" && slug) renderRegion(slug);
+  else if (kind === "regions") { mounted = null; renderRegionList(); }
   else renderStats();
 }
 // 미션 페이지네이션 버튼: 해시만 바꾸므로 페이지가 새로고침되지 않는다
