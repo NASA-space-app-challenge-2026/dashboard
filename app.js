@@ -1,6 +1,8 @@
 // History API 라우팅 SPA: /stats (기본), /mission/<slug>/<page>, /regions, /regions/<소문자-하이픈 이름>, /about
 const BASE = "https://www.spaceappschallenge.org";
 const PAGE_SIZE = 20;
+const REPO_URL = "https://github.com/NASA-space-app-challenge-2026/dashboard";
+const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>`;
 const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions", ABOUT: "about" });
 const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
@@ -15,6 +17,8 @@ const STRINGS = {
     aboutOfficial: "공식 사이트 바로가기 ↗",
     aboutNoticeTitle: "안내",
     aboutNotice: "이 페이지는 NASA 또는 NASA Space Apps Challenge 주최 측이 운영하는 공식 페이지가 아닙니다. 공식 사이트에 공개된 정보를 바탕으로 만든 비공식 통계 페이지이며, 정확한 최신 정보는 반드시 공식 사이트에서 확인하세요. 최종적으로 제출되지 않은 팀 정보는 통계에서 제외했습니다.",
+    aboutReportTitle: "정보 수정 제안",
+    aboutReport: "잘못되었거나 누락된 정보를 발견하셨다면 아래 GitHub 저장소에 이슈 또는 PR로 알려주세요. 확인 후 반영하겠습니다.", repoLink: "GitHub 저장소 ↗",
     missionsTitle: "미션별 제출 팀", missionListTitle: "미션 목록", mission: "미션",
     badge: (teams, members) => `${teams}팀 · ${members}명`,
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
@@ -46,6 +50,8 @@ const STRINGS = {
     aboutOfficial: "Go to the official website ↗",
     aboutNoticeTitle: "Notice",
     aboutNotice: "This is not an official page of NASA or the NASA Space Apps Challenge organizers. It is an unofficial statistics page built from information published on the official website. Please check the official website for accurate, up-to-date information. Teams that did not make a final submission are excluded from these statistics.",
+    aboutReportTitle: "Report a correction",
+    aboutReport: "If you spot incorrect or missing information, please let us know by opening an issue or a PR on the GitHub repository below. We will review and update it.", repoLink: "GitHub repository ↗",
     missionsTitle: "Submitted Teams by Mission", missionListTitle: "Missions", mission: "Mission",
     badge: (teams, members) => `${teams} teams · ${members} members`,
     back: "← Stats", notFound: "Mission not found.",
@@ -88,7 +94,7 @@ const setView = (nav, title) => {
   document.title = `${title} · NASA Space Apps Challenge 2026`;
   document.documentElement.lang = lang;
   $("lang-label").textContent = L.langToggle;
-  $("footer").textContent = L.footer;
+  $("footer").innerHTML = `${L.footer}<br><a class="gh" href="${REPO_URL}" target="_blank" rel="noopener" aria-label="GitHub">${GITHUB_ICON}</a>`;
   document.querySelectorAll("nav a").forEach(a => { a.textContent = L[a.dataset.label]; });
   document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === nav));
 };
@@ -289,7 +295,8 @@ function renderAbout() {
   app.innerHTML = `<h1>${L.aboutTitle}</h1>
     <div class="card"><div class="card-c">${L.aboutBody.map(p => `<p class="desc">${p}</p>`).join("")}
       <a class="ext" href="${BASE}" target="_blank" rel="noopener">${L.aboutOfficial}</a></div></div>
-    <div class="card notice"><div class="card-h"><h2>${L.aboutNoticeTitle}</h2></div><div class="card-c"><p class="desc">${L.aboutNotice}</p></div></div>`;
+    <div class="card notice"><div class="card-h"><h2>${L.aboutNoticeTitle}</h2></div><div class="card-c"><p class="desc">${L.aboutNotice}</p></div></div>
+    <div class="card notice"><div class="card-h"><h2>${L.aboutReportTitle}</h2></div><div class="card-c"><p class="desc">${L.aboutReport}</p><a class="ext" href="${REPO_URL}" target="_blank" rel="noopener">${L.repoLink}</a></div></div>`;
 }
 
 /* ---------- 라우터 ---------- */
