@@ -6,6 +6,7 @@ from pathlib import Path
 from crawl import BASE, CACHE, ROOT, is_submitted, stage_challenges
 
 OVERRIDES = json.loads((Path(__file__).parent / "source_overrides.json").read_text())
+GITHUB_WEB = json.loads((Path(__file__).parent / "github_web.json").read_text())  # resolve_github_web.py 결과
 VIRTUAL = "Virtual"
 
 
@@ -25,6 +26,13 @@ def ghio_repo(url):
     if not m:
         return None
     return f"{m[1]}/{m[2] or m[1] + '.github.io'}"
+
+
+def swap_github_for_web(url):
+    """GitHub 저장소 링크이고 배포된 웹 주소를 찾았다면 (웹 주소, 저장소) 를, 아니면 (원본, None) 을 돌려준다."""
+    r = repo_of(url)
+    web = GITHUB_WEB.get(f"{r[0]}/{r[1]}") if r else None
+    return (web, f"{r[0]}/{r[1]}") if web else (url, None)
 
 
 def pick_source(web, intro, repos):
@@ -64,6 +72,9 @@ def main():
         pd = n["projectDetails"] or {}
         demo, project = pd.get("demoLink") or None, pd.get("projectLink") or None
         src = OVERRIDES.get(rel) or pick_source(project, demo, page["repos"])
+        demo, demo_repo = swap_github_for_web(demo)
+        project, project_repo = swap_github_for_web(project)
+        src = src or demo_repo or project_repo
         rows.append({
             "name": n["title"], "members": page["members"],
             "challenge": (n["challengeDetails"] or {}).get("title") or "(미지정)",
