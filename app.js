@@ -86,8 +86,10 @@ const n = x => x.toLocaleString();
 const D = window.DATA, T = D.teams;
 const teamSlug = t => t.path.split("/").filter(Boolean).pop();  // "/2026/find-a-team/<slug>/" -> "<slug>" (경로가 유일하므로 슬러그도 유일)
 const teamHref = t => `/teams/${encodeURIComponent(teamSlug(t))}`;
-// 팀 프로필 원형 이미지. 이미지가 없으면 빈 원(더미)을 보여 준다
-const avatar = t => t.image ? `<img class="avatar" src="${esc(t.image)}" alt="" loading="lazy">` : `<span class="avatar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M0 24c0-6 5-10 12-10s12 4 12 10z"/></svg></span>`;
+// 팀 프로필 원형 이미지. 이미지가 없거나 불러오는 중이면 사람 모양 더미를 보여 준다
+const avatar = t => `<span class="avatar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M0 24c0-6 5-10 12-10s12 4 12 10z"/></svg>${t.image ? `<img src="${esc(t.image)}" alt="" width="28" height="28" loading="lazy" decoding="async">` : ""}</span>`;
+// 이미지는 더미 위에 겹쳐 두고, 다 불러온 뒤에 서서히 나타나게 한다 (load 이벤트는 버블링되지 않아 캡처 단계에서 받는다)
+document.addEventListener("load", e => { if (e.target.tagName === "IMG" && e.target.closest(".avatar")) e.target.classList.add("on"); }, true);
 const TEAM_BY_SLUG = new Map(T.map(t => [teamSlug(t), t]));
 const MISSION_TEXT = { [Lang.KO]: window.MISSIONS_KO || {}, [Lang.EN]: window.MISSIONS_EN || {} };
 const CH_BY_TITLE = new Map(D.challenges.map(c => [c.title, c]));
@@ -166,13 +168,13 @@ function renderMission(slug, pageParam) {
   }
   const { teams, pages } = mounted, page = clamp(pageParam, 1, pages);
   const pageTeams = teams.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const rows = pageTeams.map((t, i) => `<tr>
-    <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td class="go" data-href="${teamHref(t)}"><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
+  const rows = pageTeams.map((t, i) => `<tr class="go" data-href="${teamHref(t)}">
+    <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
     <td title="${esc(L.clickRegionHint)}"><span class="rgn" data-region="${esc(t.region)}">${esc(t.region)}</span></td><td class="num">${t.members ?? "-"}</td>
     <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + (teams.length ? "" : `<tr><td class="empty-row" colspan="8">${mounted.all.length ? L.noTeamMatch : L.noTeams}</td></tr>`) + blankRows(Math.max(pageTeams.length, 1), 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
   $("tsub").textContent = L.teamListSub(n(teams.length), PAGE_SIZE);
-  $("list").innerHTML = `${pager}<div style="overflow-x:auto"><table>
+  $("list").innerHTML = `${pager}<div class="tscroll"><table>
     <colgroup><col style="width:64px"><col><col style="width:18%"><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
     <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
@@ -284,7 +286,7 @@ function renderRegions() {
   const page = reg.page = clamp(reg.page, 1, pages);
   const pageRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   $("rsub").textContent = L.regionsSub(n(rows.length), PAGE_SIZE);
-  $("regtable").innerHTML = `${pagerHtml(page, pages, rows.length, PAGE_SIZE)}<div style="overflow-x:auto"><table style="min-width:640px;table-layout:fixed">
+  $("regtable").innerHTML = `${pagerHtml(page, pages, rows.length, PAGE_SIZE)}<div class="tscroll"><table style="min-width:640px;table-layout:fixed">
     <colgroup><col style="width:7%"><col style="width:27%"><col style="width:23%"><col style="width:14%"><col style="width:14%"><col style="width:15%"></colgroup>
     <thead><tr><th class="num">${L.no}</th>${COLS.map(([k, l, c]) => `<th class="${c}" data-k="${k}" style="cursor:pointer">${L[l]}${sortKey === k ? (sortDir < 0 ? " ↓" : " ↑") : ""}</th>`).join("")}</tr></thead>
     <tbody>${pageRows.map((r, i) => `<tr class="go" data-href="/regions/${encodeURIComponent(r.slug)}"><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="/regions/${encodeURIComponent(r.slug)}">${esc(r.name)}</a></td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
@@ -298,7 +300,7 @@ function renderRegionList() {
 }
 
 const REGION_OPEN_MAX = 100;  // 제출 팀이 이 수 이하인 지역은 미션 목록을 처음부터 펼친다
-const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td class="go" data-href="${teamHref(t)}"><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
+const teamRow = (t, i) => `<tr class="go" data-href="${teamHref(t)}"><td class="num">${i + 1}</td><td><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
   <td class="num">${t.members ?? "-"}</td><td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`;
 const fillMission = d => {  // 표는 처음 펼칠 때 한 번만 그린다 (팀이 수천 개인 지역 대비)
   if (d.dataset.filled) return;
@@ -387,7 +389,7 @@ document.addEventListener("click", e => {
   const a = e.target.closest("a[href^='/']");
   if (a && !a.target && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { e.preventDefault(); go(a.getAttribute("href")); return; }
   const row = e.target.closest("[data-href]");
-  if (row && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { go(row.dataset.href); return; }
+  if (row && !e.target.closest("a, button, [data-region]") && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { go(row.dataset.href); return; }
   const b = e.target.closest("#list button[data-p]");
   if (b && !b.disabled) go(`/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`);
 });
