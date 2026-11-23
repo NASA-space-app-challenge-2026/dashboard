@@ -129,6 +129,10 @@ tbody tr{height:40px}
 .sec-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 14px}.sec-h h2.sec{margin:0}.sec-h button.more{margin:0 0 0 8px;height:34px}
 h2.sec{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:8px 0 14px}
 
+/* about page */
+.card.notice{margin-top:16px}
+.card .ext,.card.notice .desc{margin-bottom:0}
+
 /* entrance animation */
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .top{animation:rise .5s ease-out both}

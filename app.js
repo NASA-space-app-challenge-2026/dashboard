@@ -1,14 +1,22 @@
-// 해시 라우팅 SPA: #/stats (기본), #/mission/<slug>/<page>, #/regions, #/regions/<소문자-하이픈 이름>
+// 해시 라우팅 SPA: #/stats (기본), #/mission/<slug>/<page>, #/regions, #/regions/<소문자-하이픈 이름>, #/about
 const BASE = "https://www.spaceappschallenge.org";
 const PAGE_SIZE = 20;
-const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions" });
+const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions", ABOUT: "about" });
 const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const Theme = Object.freeze({ LIGHT: "light", DARK: "dark" });
 const THEME_KEY = "theme";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", themeToggle: "테마 전환", navStats: "통계", navRegions: "지역",
+    langToggle: "EN", themeToggle: "테마 전환", navStats: "통계", navRegions: "지역", navAbout: "소개",
+    aboutTitle: "NASA Space Apps Challenge 소개",
+    aboutBody: [
+      "NASA Space Apps Challenge는 NASA가 매년 개최하는 세계 최대 규모의 국제 해커톤입니다. 누구나 팀을 이뤄 참가할 수 있으며, NASA가 공개한 우주·지구 관측 데이터를 활용해 실제 문제를 해결하는 프로젝트를 만듭니다.",
+      "참가 팀은 주최 측이 제시한 여러 미션(챌린지) 중 하나를 골라 정해진 기간 동안 아이디어를 구현하고, 결과물을 제출합니다. 전 세계 각 지역에서 오프라인 행사와 온라인 행사가 함께 열립니다."
+    ],
+    aboutOfficial: "공식 사이트 바로가기 ↗",
+    aboutNoticeTitle: "안내",
+    aboutNotice: "이 페이지는 NASA 또는 NASA Space Apps Challenge 주최 측이 운영하는 공식 페이지가 아닙니다. 공식 사이트에 공개된 정보를 바탕으로 만든 비공식 통계 페이지이며, 정확한 최신 정보는 반드시 공식 사이트에서 확인하세요.",
     missionsTitle: "미션별 제출 팀", missionListTitle: "미션 목록", mission: "미션",
     badge: (teams, members) => `${teams}팀 · ${members}명`,
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
@@ -31,7 +39,15 @@ const STRINGS = {
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", themeToggle: "Toggle theme", navStats: "Stats", navRegions: "Regions",
+    langToggle: "한국어", themeToggle: "Toggle theme", navStats: "Stats", navRegions: "Regions", navAbout: "About",
+    aboutTitle: "About NASA Space Apps Challenge",
+    aboutBody: [
+      "The NASA Space Apps Challenge is the largest annual international hackathon, hosted by NASA. Anyone can join a team and build projects that tackle real-world problems using the space and Earth observation data NASA makes openly available.",
+      "Teams pick one of the missions (challenges) set by the organizers, build their idea within the event period, and submit the result. Events are held both in person and online in regions around the world."
+    ],
+    aboutOfficial: "Go to the official website ↗",
+    aboutNoticeTitle: "Notice",
+    aboutNotice: "This is not an official page of NASA or the NASA Space Apps Challenge organizers. It is an unofficial statistics page built from information published on the official website. Please check the official website for accurate, up-to-date information.",
     missionsTitle: "Submitted Teams by Mission", missionListTitle: "Missions", mission: "Mission",
     badge: (teams, members) => `${teams} teams · ${members} members`,
     back: "← Stats", notFound: "Mission not found.",
@@ -251,6 +267,16 @@ function renderRegion(name) {
   app.querySelectorAll("details").forEach(d => { if (d.open) fillMission(d); d.addEventListener("toggle", () => d.open && fillMission(d)); });
 }
 
+/* ---------- 소개 ---------- */
+function renderAbout() {
+  mounted = null;
+  setView(Nav.ABOUT, L.navAbout);
+  app.innerHTML = `<h1>${L.aboutTitle}</h1>
+    <div class="card"><div class="card-c">${L.aboutBody.map(p => `<p class="desc">${p}</p>`).join("")}
+      <a class="ext" href="${BASE}" target="_blank" rel="noopener">${L.aboutOfficial}</a></div></div>
+    <div class="card notice"><div class="card-h"><h2>${L.aboutNoticeTitle}</h2></div><div class="card-c"><p class="desc">${L.aboutNotice}</p></div></div>`;
+}
+
 /* ---------- 라우터 ---------- */
 let lastView = "";
 function route() {
@@ -259,6 +285,7 @@ function route() {
   if (view !== lastView) scrollTo(0, 0);  // 다른 화면으로 갈 때만 맨 위로
   lastView = view;
   if (kind === "mission" && slug) renderMission(slug, parseInt(p, 10) || 1);
+  else if (kind === "about") renderAbout();
   else if (kind === "regions" && slug) renderRegion(slug);
   else if (kind === "regions") { mounted = null; renderRegionList(); }
   else renderStats();
