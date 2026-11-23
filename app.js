@@ -251,6 +251,7 @@ async function loadTeamIntro(slug) {
   try { const r = await fetch(`/data/teams/${encodeURIComponent(slug)}.json`); if (r.ok) d = await r.json(); } catch {}
   const box = $("intro");
   if (!box || box.dataset.slug !== slug) return;  // 그 사이 다른 화면으로 이동했다
+  if (d?.description) box.closest(".card").dataset.tr = "";  // 소개 글이 있을 때만 번역 대상
   box.innerHTML = `<div class="team-intro">${d?.image ? `<img class="team-img" src="${esc(d.image)}" alt="${esc(TEAM_BY_SLUG.get(slug).name)}">` : ""}
     ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>`;
   // 프로젝트 탭의 글은 있는 팀에만 보인다. 요약은 데모 위(소개 카드 바로 뒤), 나머지는 맨 아래에 붙인다. details 는 build 단계에서 허용 태그만 남긴 HTML이다.
@@ -262,9 +263,16 @@ async function loadTeamIntro(slug) {
   translateCards([...app.querySelectorAll("[data-tr]")]);
 }
 
-// 한국어일 때 영어 원문(요약·상세)을 Chrome 내장 Translator API(기기 안에서 번역)로 번역한다. 지원하지 않는 브라우저에서는 원문 그대로 둔다.
+// 한국어일 때 원문(소개·요약·상세)을 Chrome 내장 Translator API(기기 안에서 번역)로 번역한다. 소개 글은 팀마다 언어가 달라 LanguageDetector 로 원문 언어를 알아내고, 못 알아내면 영어로 본다. 지원하지 않는 브라우저에서는 원문 그대로 둔다.
 // 모델이 아직 없으면(downloadable) 내려받기에 사용자 동작이 필요하므로, 자동 대신 제목줄의 버튼을 눌렀을 때 번역한다.
-const TRANSLATE_PAIR = Object.freeze({ sourceLanguage: "en", targetLanguage: "ko" });
+const DEFAULT_SOURCE_LANG = "en";
+const detectLanguage = async text => {
+  if (!("LanguageDetector" in self)) return DEFAULT_SOURCE_LANG;
+  try {
+    const [best] = await (await LanguageDetector.create()).detect(text);
+    return best?.confidence >= 0.5 ? best.detectedLanguage : DEFAULT_SOURCE_LANG;
+  } catch { return DEFAULT_SOURCE_LANG; }
+};
 const textNodes = el => {
   const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), out = [];
   for (let n; (n = w.nextNode());) if (n.nodeValue.trim()) out.push(n);
@@ -277,14 +285,17 @@ const translateText = async (translator, text) => (await Promise.all(text.split(
   return lead + await translator.translate(part.trim()) + trail;
 }))).join("");
 async function translateCards(cards) {
-  if (lang !== Lang.KO || !("Translator" in self) || !cards.length) return;
-  let availability;
-  try { availability = await Translator.availability(TRANSLATE_PAIR); } catch { return; }
-  if (availability === "unavailable") return;
-  let translator = null;
-  const getTranslator = async () => translator ??= await Translator.create(TRANSLATE_PAIR);
+  if (lang !== Lang.KO || !("Translator" in self)) return;
+  const translators = new Map();  // 원문 언어 -> 번역기
   for (const card of cards) {
     const nodes = textNodes(card.querySelector(".card-c")).map(node => ({ node, en: node.nodeValue, ko: null }));
+    const sourceLanguage = await detectLanguage(nodes.map(e => e.en).join(" ").slice(0, 500));
+    if (sourceLanguage === Lang.KO) continue;  // 이미 한국어
+    const pair = { sourceLanguage, targetLanguage: Lang.KO };
+    let availability;
+    try { availability = await Translator.availability(pair); } catch { continue; }
+    if (availability === "unavailable") continue;
+    const getTranslator = async () => translators.get(sourceLanguage) ?? translators.set(sourceLanguage, await Translator.create(pair)).get(sourceLanguage);
     const head = card.querySelector(".card-h"), btn = document.createElement("button");
     btn.type = "button"; btn.className = "tr-toggle"; btn.textContent = L.showTranslated;
     head.classList.add("tr-h"); head.append(btn);
