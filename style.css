@@ -258,9 +258,11 @@ button.chip:hover{background:hsl(var(--accent))}
 /* 팀 페이지 카드: 제목줄(제목 + 확대·번역 같은 액션)은 스크롤해도 상단 헤더 아래에 붙어 있고, 구분선으로 본문과 나뉜다 */
 .team-sec>.card-h{position:sticky;top:var(--hdr);z-index:5;padding-bottom:14px;background:var(--sticky-bg);border-bottom:1px solid hsl(var(--border));border-radius:calc(var(--radius) + 3px) calc(var(--radius) + 3px) 0 0;transition:border-radius .15s}
 .project-details{line-height:1.7}
+/* 긴 글은 한 줄이 너무 길어지지 않게 80ch 폭으로 줄이고, 남는 폭은 양쪽 여백으로 나눠 가운데에 둔다 */
+.card-c.prose{padding-inline:max(24px,calc((100% - 80ch)/2))}
 .project-details h2,.project-details h3,.project-details h4{margin:1.4em 0 .5em}
 .project-details :first-child{margin-top:0}
-.project-details img{max-width:100%;height:auto;border-radius:8px;margin:12px 0}
+.project-details img{display:block;max-width:100%;max-height:70vh;width:auto;height:auto;margin:12px auto;border-radius:8px}  /* 세로로 긴 이미지는 화면 높이의 70%까지만, 비율은 유지 */
 .project-details a,.ref-list a{overflow-wrap:anywhere}
 .ref-list{margin:0;padding-left:20px;line-height:1.8}
 .team-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin-bottom:16px}

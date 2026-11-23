@@ -253,8 +253,8 @@ async function loadTeamIntro(slug) {
   box.innerHTML = `<div class="team-intro">${d?.image ? `<img class="team-img" src="${esc(d.image)}" alt="${esc(TEAM_BY_SLUG.get(slug).name)}">` : ""}
     ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>`;
   // 프로젝트 탭의 글은 있는 팀에만 보인다. 요약은 데모 위(소개 카드 바로 뒤), 나머지는 맨 아래에 붙인다. details 는 build 단계에서 허용 태그만 남긴 HTML이다.
-  if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
-  if (d?.details) app.insertAdjacentHTML("beforeend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c project-details">${d.details}</div></div>`);
+  if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c prose"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
+  if (d?.details) app.insertAdjacentHTML("beforeend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c prose project-details">${d.details}</div></div>`);
   const refCard = (title, refs) => refs?.length && app.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${title}</h2></div><div class="card-c"><ul class="ref-list">${refs.map(([name, url]) => `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a></li>`).join("")}</ul></div></div>`);
   refCard(L.dataRefs, d?.dataRefs);
   refCard(L.projectRefs, d?.projectRefs);
