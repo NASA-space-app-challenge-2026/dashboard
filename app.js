@@ -8,7 +8,7 @@ const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
+    langToggle: "EN", searchLabel: "검색", searchPh: "팀 또는 지역 검색", searchRegions: "지역", searchTeams: "팀", searchEmpty: "검색 결과가 없습니다.", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
     aboutTitle: "NASA Space Apps Challenge 소개",
     aboutBody: [
       "NASA Space Apps Challenge는 NASA가 매년 개최하는 세계 최대 규모의 국제 해커톤입니다. 누구나 팀을 이뤄 참가할 수 있으며, NASA가 공개한 우주·지구 관측 데이터를 활용해 실제 문제를 해결하는 프로젝트를 만듭니다.",
@@ -42,7 +42,7 @@ const STRINGS = {
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
+    langToggle: "한국어", searchLabel: "Search", searchPh: "Search teams or regions", searchRegions: "Regions", searchTeams: "Teams", searchEmpty: "No results.", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
     aboutTitle: "About NASA Space Apps Challenge",
     aboutBody: [
       "The NASA Space Apps Challenge is the largest annual international hackathon, hosted by NASA. Anyone can join a team and build projects that tackle real-world problems using the space and Earth observation data NASA makes openly available.",
@@ -103,6 +103,8 @@ const setView = (nav, title) => {
   document.title = `${title} · NASA Space Apps Challenge 2026`;
   document.documentElement.lang = lang;
   $("lang-label").textContent = L.langToggle;
+  $("gs-open-label").textContent = L.searchLabel;
+  $("gs-q").placeholder = L.searchPh;
   $("footer").innerHTML = `${L.footer}<br><a class="gh" href="${REPO_URL}" target="_blank" rel="noopener" aria-label="GitHub">${GITHUB_ICON}</a>`;
   document.querySelectorAll("nav a").forEach(a => { a.textContent = L[a.dataset.label]; });
   document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === nav));
@@ -422,6 +424,49 @@ $("lang").addEventListener("click", () => {
   try { localStorage.setItem(LANG_KEY, lang); } catch {}
   mounted = null;  // 머리글이 캐시되어 있으므로 다시 그린다
   route();
+});
+// 전역 검색 (Cmd/Ctrl+K): 지역·팀 이름으로 찾아 해당 페이지로 이동
+const SearchKind = Object.freeze({ REGION: "region", TEAM: "team" });
+const SEARCH_MAX = Object.freeze({ [SearchKind.REGION]: 6, [SearchKind.TEAM]: 8 });
+const SEARCH_INDEX = [
+  ...REG.map(r => ({ kind: SearchKind.REGION, name: r.name, sub: r.country, key: `${r.name} ${r.country}`.toLowerCase(), href: `/regions/${encodeURIComponent(r.slug)}` })),
+  ...T.map(t => ({ kind: SearchKind.TEAM, name: t.name, sub: t.region, key: t.name.toLowerCase(), href: teamHref(t), team: t }))
+];
+document.body.insertAdjacentHTML("beforeend", `<div id="gs" class="gs"><div class="gs-box" role="dialog" aria-modal="true"><input id="gs-q" type="search" autocomplete="off" spellcheck="false"><ul id="gs-list" role="listbox"></ul></div></div>`);
+$("gs-kbd").textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K";
+let gsActive = 0;
+const gsItems = () => [...document.querySelectorAll("#gs-list .gs-item")];
+const gsMark = i => { const items = gsItems(); if (!items.length) return; gsActive = (i + items.length) % items.length; items.forEach((el, k) => el.classList.toggle("on", k === gsActive)); items[gsActive].scrollIntoView({ block: "nearest" }); };
+function gsRender() {
+  const q = $("gs-q").value.trim().toLowerCase();
+  if (!q) { $("gs-list").innerHTML = ""; return; }
+  const groups = [[SearchKind.REGION, L.searchRegions], [SearchKind.TEAM, L.searchTeams]].map(([kind, title]) => {
+    const hits = SEARCH_INDEX.filter(x => x.kind === kind && x.key.includes(q));
+    const starts = hits.filter(x => x.name.toLowerCase().startsWith(q));
+    return [title, [...starts, ...hits.filter(x => !starts.includes(x))].slice(0, SEARCH_MAX[kind])];
+  }).filter(([, items]) => items.length);
+  $("gs-list").innerHTML = groups.length ? groups.map(([title, items]) => `<li class="gs-h">${title}</li>${items.map(x => `<li class="gs-item" role="option" data-href="${esc(x.href)}">${x.team ? avatar(x.team) : ""}<span class="n">${esc(x.name)}</span><span class="s">${esc(x.sub)}</span></li>`).join("")}`).join("") : `<li class="gs-empty">${L.searchEmpty}</li>`;
+  gsMark(0);
+}
+function gsToggle(open) {
+  $("gs").classList.toggle("open", open);
+  if (open) { $("gs-q").value = ""; gsRender(); $("gs-q").focus(); }
+}
+const gsPick = el => { if (!el) return; gsToggle(false); go(el.dataset.href); };
+$("gs-open").addEventListener("click", () => gsToggle(true));
+$("gs-q").addEventListener("input", gsRender);
+$("gs-q").addEventListener("keydown", e => {
+  if (e.isComposing) return;  // 한글 조합 중 Enter/방향키는 입력기가 쓴다
+  if (e.key === "ArrowDown") { e.preventDefault(); gsMark(gsActive + 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); gsMark(gsActive - 1); }
+  else if (e.key === "Enter") { e.preventDefault(); gsPick(gsItems()[gsActive]); }
+});
+$("gs-list").addEventListener("click", e => gsPick(e.target.closest(".gs-item")));
+$("gs-list").addEventListener("mousemove", e => { const el = e.target.closest(".gs-item"); if (el && gsItems().indexOf(el) !== gsActive) gsMark(gsItems().indexOf(el)); });
+$("gs").addEventListener("mousedown", e => { if (e.target === $("gs")) gsToggle(false); });
+addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); gsToggle(!$("gs").classList.contains("open")); }
+  else if (e.key === "Escape" && $("gs").classList.contains("open")) gsToggle(false);
 });
 // 404.html 이 보낸 ?p=/경로 를 주소창의 실제 경로로 복원하고, 옛 #/경로 링크도 새 경로로 바꾼다
 const redirected = new URLSearchParams(location.search).get("p") || (location.hash.startsWith("#/") && location.hash.slice(1));

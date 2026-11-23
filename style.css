@@ -31,7 +31,7 @@ nav{display:flex;gap:4px}
 nav a{padding:6px 14px;border-radius:calc(var(--radius) - 2px);text-decoration:none;color:hsl(var(--muted-foreground));font-size:16px;font-weight:500}
 nav a:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
 nav a.active{background:hsl(var(--accent));color:hsl(var(--foreground))}
-button.lang{margin-left:auto;height:34px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;border-radius:calc(var(--radius) - 2px);border:0;
+button.lang{height:34px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;border-radius:calc(var(--radius) - 2px);border:0;
   background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:15px;font-weight:500;cursor:pointer}
 button.lang:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
 h1{font-size:32px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
@@ -200,9 +200,10 @@ button,summary,nav a,.pager button{touch-action:manipulation}
   footer.foot{padding:16px 16px 32px}
   header.top{margin-bottom:20px}
   header.top .in{height:auto;padding:8px 16px;flex-wrap:wrap;gap:4px 8px}
-  header.top .brand{font-size:16px;margin-right:auto}
-  button.lang{margin-left:0;height:40px}
-  nav{order:3;width:100%;overflow-x:auto;scrollbar-width:none}
+  header.top .brand{font-size:16px;width:100%}
+  button.lang{order:2;height:40px}
+  button.gs-open{order:2;margin-left:0;height:40px}
+  nav{order:1;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
   nav::-webkit-scrollbar{display:none}
   nav a{padding:8px 12px;white-space:nowrap}
   h1{font-size:26px}
@@ -217,6 +218,9 @@ button,summary,nav a,.pager button{touch-action:manipulation}
   input[type=search]{min-width:0}
   #rq{max-width:none!important}
   summary{padding:12px 14px;font-size:16px;flex-wrap:wrap}
+  summary .sum-t{flex:1 1 160px;min-width:160px}  /* 제목이 눌리지 않게 최소 폭을 두고, 모자라면 뱃지를 아랫줄로 내린다 */
+  summary .badge{margin-left:0}
+  summary::after{margin-left:auto}
   .mission-row{padding:12px 14px;font-size:16px}
   .pager{gap:2px;flex-wrap:wrap}
   .pager .info{flex:1 1 100%;margin-right:0;margin-bottom:4px}
@@ -263,3 +267,26 @@ button.chip:hover{background:hsl(var(--accent))}
 .tsearch input{width:100%}
 .tsearch #chip{position:absolute;left:7px;top:50%;transform:translateY(-50%);max-width:65%;z-index:1}
 .tsearch button.chip{height:28px;max-width:100%;padding:0 10px;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* global search (Cmd/Ctrl+K) */
+button.gs-open{margin-left:auto;height:34px;padding:0 10px;display:inline-flex;align-items:center;gap:8px;border-radius:calc(var(--radius) - 2px);border:1px solid hsl(var(--border));
+  background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:15px;font-weight:500;cursor:pointer}
+button.gs-open:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.gs-open kbd{font:inherit;font-size:12px;padding:1px 6px;border-radius:4px;background:hsl(var(--muted))}
+.gs{position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 0;background:rgb(0 0 0/.55);
+  opacity:0;visibility:hidden;transition:opacity .18s ease,visibility 0s .18s}
+.gs.open{opacity:1;visibility:visible;transition-delay:0s}
+.gs-box{width:100%;max-width:560px;max-height:70vh;display:flex;flex-direction:column;border:1px solid hsl(var(--border));border-radius:calc(var(--radius) + 4px);
+  background:hsl(240 10% 7%/.95);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:hidden;
+  transform:translateY(-12px) scale(.97);transition:transform .18s ease}
+.gs.open .gs-box{transform:none}
+@media(prefers-reduced-motion:reduce){.gs,.gs-box{transition:none}}
+.gs-box input{flex:none;width:100%;height:52px;border:0;border-bottom:1px solid hsl(var(--border));border-radius:0;padding:0 18px;outline:none}
+.gs-box ul{list-style:none;margin:0;padding:6px;overflow-y:auto}
+.gs-h{padding:8px 12px 4px;font-size:13px;font-weight:600;color:hsl(var(--muted-foreground))}
+.gs-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:calc(var(--radius) - 2px);cursor:pointer}
+.gs-item.on{background:hsl(var(--accent))}
+.gs-item .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-item .s{flex:none;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;color:hsl(var(--muted-foreground))}
+.gs-empty{padding:16px 12px;text-align:center;color:hsl(var(--muted-foreground))}
+@media(max-width:640px){.gs-open kbd,.gs-open span{display:none}}
