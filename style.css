@@ -272,7 +272,7 @@ button.chip:hover{background:hsl(var(--accent))}
 button.gs-open{margin-left:auto;height:34px;padding:0 10px;display:inline-flex;align-items:center;gap:8px;border-radius:calc(var(--radius) - 2px);border:1px solid hsl(var(--border));
   background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:15px;font-weight:500;cursor:pointer}
 button.gs-open:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
-.gs-open kbd{font:inherit;font-size:12px;padding:1px 6px;border-radius:4px;background:hsl(var(--muted))}
+.gs-open kbd{font:inherit;font-family:system-ui,-apple-system,sans-serif;font-size:12px;line-height:1;display:inline-flex;align-items:center;padding:3px 6px;border-radius:4px;background:hsl(var(--muted))}
 .gs{position:fixed;inset:0;z-index:50;display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 0;background:rgb(0 0 0/.55);
   opacity:0;visibility:hidden;transition:opacity .18s ease,visibility 0s .18s}
 .gs.open{opacity:1;visibility:visible;transition-delay:0s}
