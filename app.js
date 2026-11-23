@@ -23,7 +23,7 @@ const STRINGS = {
     badge: (teams, members) => `${teams}팀 · ${members}명`,
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
-    official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
+    official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", missionSearchPh: "팀 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
     teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
@@ -57,7 +57,7 @@ const STRINGS = {
     badge: (teams, members) => `${teams} teams · ${members} members`,
     back: "← Stats", notFound: "Mission not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
-    official: "Official mission page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
+    official: "Official mission page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", missionSearchPh: "Search team", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
     teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
@@ -302,12 +302,27 @@ function renderRegionList() {
 const REGION_OPEN_MAX = 100;  // 제출 팀이 이 수 이하인 지역은 미션 목록을 처음부터 펼친다
 const teamRow = (t, i) => `<tr class="go" data-href="${teamHref(t)}"><td class="num">${i + 1}</td><td><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
   <td class="num">${t.members ?? "-"}</td><td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`;
-const fillMission = d => {  // 표는 처음 펼칠 때 한 번만 그린다 (팀이 수천 개인 지역 대비)
-  if (d.dataset.filled) return;
-  d.dataset.filled = "1";
-  d.querySelector(".tw").innerHTML = `<table><colgroup><col style="width:64px"><col><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
-    <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead>
-    <tbody>${regionTeams.get(d.dataset.title).map(teamRow).join("")}</tbody></table>`;
+const MISSION_COLS = 7;
+const fillMission = (d, page = 1) => {  // 표는 처음 펼칠 때 한 번만 그리고, 이후엔 페이지/검색이 바뀔 때만 다시 그린다 (팀이 수천 개인 지역 대비)
+  const tw = d.querySelector(".tw");
+  if (!d.dataset.filled) {
+    d.dataset.filled = "1";
+    const searchable = regionTeams.get(d.dataset.title).length > PAGE_SIZE;  // 페이지가 1개뿐이면 검색/페이저 바를 만들지 않는다
+    tw.innerHTML = `${searchable ? `<div class="tbar"><input type="search" class="mq" placeholder="${L.missionSearchPh}" aria-label="${L.missionSearchPh}"><span class="pg"></span></div>` : ""}
+      <table><colgroup><col style="width:64px"><col><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
+      <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead><tbody></tbody></table>`;
+    tw.querySelector(".mq")?.addEventListener("input", e => { d._q = e.target.value.trim().toLowerCase(); fillMission(d, 1); });
+  }
+  const q = d._q || "";
+  const all = regionTeams.get(d.dataset.title).filter(t => !q || t.name.toLowerCase().includes(q));
+  const pages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  page = clamp(page, 1, pages);
+  const start = (page - 1) * PAGE_SIZE, shown = all.slice(start, start + PAGE_SIZE);
+  const pg = tw.querySelector(".pg");
+  if (pg) pg.innerHTML = pages > 1 || q ? pagerHtml(page, pages, all.length, PAGE_SIZE) : "";
+  tw.querySelector("tbody").innerHTML = shown.map((t, i) => teamRow(t, start + i)).join("")
+    + (all.length ? "" : `<tr><td class="empty-row" colspan="${MISSION_COLS}">${L.noTeamMatch}</td></tr>`)
+    + (pages > 1 ? blankRows(Math.max(shown.length, 1), MISSION_COLS) : "");
 };
 const ACCORDION_MS = 250;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -316,7 +331,7 @@ const setOpen = (d, open) => {  // 높이/투명도 애니메이션으로 펼치
   if (open === (d.open && !d.classList.contains("shut"))) return;
   d._anim?.cancel();
   d.classList.toggle("shut", !open);
-  if (open) { d.open = true; fillMission(d); }
+  if (open) { d.open = true; if (!d.dataset.filled) fillMission(d); }
   if (reduceMotion.matches) { d.open = open; return; }
   const full = tw.scrollHeight + 1;
   tw.classList.add("anim");
@@ -354,6 +369,13 @@ function renderRegion(name) {
   app.querySelectorAll("button[data-all]").forEach(b => b.addEventListener("click", () => app.querySelectorAll("details").forEach(d => setOpen(d, b.dataset.all === "1"))));
   app.querySelectorAll("details").forEach(d => {
     if (d.open) fillMission(d);
+    new ResizeObserver(() => d.style.setProperty("--sum-h", `${d.querySelector("summary").offsetHeight}px`)).observe(d.querySelector("summary"));  // 스티키 페이저/열 제목이 제목 줄 바로 아래에 붙도록 높이를 알려 준다
+    d.querySelector(".tw").addEventListener("click", e => {  // 미션별 페이지 이동
+      const b = e.target.closest("button[data-p]");
+      if (!b || b.disabled) return;
+      fillMission(d, +b.dataset.p);
+      if (d.getBoundingClientRect().top < 0) d.scrollIntoView();  // 스티키 제목 아래 목록 맨 위로
+    });
     d.querySelector("summary").addEventListener("click", e => { e.preventDefault(); setOpen(d, d.classList.contains("shut") || !d.open); });
   });
 }
