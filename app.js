@@ -86,6 +86,8 @@ const n = x => x.toLocaleString();
 const D = window.DATA, T = D.teams;
 const teamSlug = t => t.path.split("/").filter(Boolean).pop();  // "/2026/find-a-team/<slug>/" -> "<slug>" (경로가 유일하므로 슬러그도 유일)
 const teamHref = t => `/teams/${encodeURIComponent(teamSlug(t))}`;
+// 팀 프로필 원형 이미지. 이미지가 없으면 빈 원(더미)을 보여 준다
+const avatar = t => t.image ? `<img class="avatar" src="${esc(t.image)}" alt="" loading="lazy">` : `<span class="avatar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M0 24c0-6 5-10 12-10s12 4 12 10z"/></svg></span>`;
 const TEAM_BY_SLUG = new Map(T.map(t => [teamSlug(t), t]));
 const MISSION_TEXT = { [Lang.KO]: window.MISSIONS_KO || {}, [Lang.EN]: window.MISSIONS_EN || {} };
 const CH_BY_TITLE = new Map(D.challenges.map(c => [c.title, c]));
@@ -165,7 +167,7 @@ function renderMission(slug, pageParam) {
   const { teams, pages } = mounted, page = clamp(pageParam, 1, pages);
   const pageTeams = teams.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const rows = pageTeams.map((t, i) => `<tr>
-    <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="${teamHref(t)}">${esc(t.name)}</a></td>
+    <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td class="go" data-href="${teamHref(t)}"><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
     <td title="${esc(L.clickRegionHint)}"><span class="rgn" data-region="${esc(t.region)}">${esc(t.region)}</span></td><td class="num">${t.members ?? "-"}</td>
     <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + (teams.length ? "" : `<tr><td class="empty-row" colspan="8">${mounted.all.length ? L.noTeamMatch : L.noTeams}</td></tr>`) + blankRows(Math.max(pageTeams.length, 1), 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
@@ -296,7 +298,7 @@ function renderRegionList() {
 }
 
 const REGION_OPEN_MAX = 100;  // 제출 팀이 이 수 이하인 지역은 미션 목록을 처음부터 펼친다
-const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td><a class="name" href="${teamHref(t)}">${esc(t.name)}</a></td>
+const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td class="go" data-href="${teamHref(t)}"><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
   <td class="num">${t.members ?? "-"}</td><td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`;
 const fillMission = d => {  // 표는 처음 펼칠 때 한 번만 그린다 (팀이 수천 개인 지역 대비)
   if (d.dataset.filled) return;
@@ -384,7 +386,7 @@ const go = path => { history.pushState(null, "", path); route(); };
 document.addEventListener("click", e => {
   const a = e.target.closest("a[href^='/']");
   if (a && !a.target && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { e.preventDefault(); go(a.getAttribute("href")); return; }
-  const row = e.target.closest("tr[data-href]");
+  const row = e.target.closest("[data-href]");
   if (row && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { go(row.dataset.href); return; }
   const b = e.target.closest("#list button[data-p]");
   if (b && !b.disabled) go(`/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`);

@@ -105,6 +105,9 @@ def main():
         })
 
     extracted = json.loads(EXTRACTED.read_text()) if EXTRACTED.exists() else {"teams": {}, "challenges": {}}
+    for r in rows:
+        img = extracted["teams"].get(slug_of(r["path"]), {}).get("image")
+        r["image"] = img["url"] if img else None
     for c in challenges.values():
         img = extracted["challenges"].get(c["slug"], {}).get("image")
         c["image"] = img["url"] if img else None
