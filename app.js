@@ -268,7 +268,6 @@ app.addEventListener("click", e => {
   const b = e.target.closest("#list button[data-p]");
   if (!b || b.disabled) return;
   location.hash = `#/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`;
-  scrollTo(0, 0);
 });
 addEventListener("hashchange", route);
 $("theme").addEventListener("click", () => {

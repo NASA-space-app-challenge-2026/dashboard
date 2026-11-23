@@ -14,7 +14,7 @@
 }
 *{box-sizing:border-box;border-color:hsl(var(--border))}
 body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground));
-  font:17px/1.6 "Inter",-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-font-smoothing:antialiased}
+  font:17px/1.6 "Inter",-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 main{max-width:1280px;margin:0 auto;padding:0 20px 300px}
 a{color:inherit}
 
@@ -128,3 +128,27 @@ tbody tr{height:40px}
 /* region page */
 .sec-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 14px}.sec-h h2.sec{margin:0}.sec-h button.more{margin:0 0 0 8px;height:34px}
 h2.sec{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:8px 0 14px}
+
+/* entrance animation */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.top{animation:rise .5s ease-out both}
+#app>*{animation:rise .55s cubic-bezier(.22,1,.36,1) both}
+#app>:nth-child(2){animation-delay:.07s}
+#app>:nth-child(3){animation-delay:.14s}
+#app>:nth-child(4){animation-delay:.21s}
+#app>:nth-child(n+5){animation-delay:.28s}
+@media (prefers-reduced-motion:reduce){.top,#app>*{animation:none}}
+
+/* bar fill animation */
+@keyframes bar-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.bar .t i{transform-origin:left;animation:bar-fill .9s cubic-bezier(.22,1,.36,1) .35s both}
+.bar:nth-child(2) .t i{animation-delay:.42s}
+.bar:nth-child(3) .t i{animation-delay:.49s}
+.bar:nth-child(4) .t i{animation-delay:.56s}
+.bar:nth-child(n+5) .t i{animation-delay:.63s}
+@media (prefers-reduced-motion:reduce){.bar .t i{animation:none}}
+
+/* page-change animation: tbody is re-created on every pagination/sort/search */
+@keyframes rows-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#list tbody,#regtable tbody{animation:rows-in .35s ease-out both}
+@media (prefers-reduced-motion:reduce){#list tbody,#regtable tbody{animation:none}}
