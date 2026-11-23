@@ -254,6 +254,9 @@ button.chip:hover{background:hsl(var(--accent))}
 .team-intro .desc{flex:1;min-width:0}
 @media(max-width:700px){.team-intro{flex-direction:column;gap:16px}.team-intro .team-img{max-width:100%}}
 .team-sec{margin-bottom:16px}
+.demo-frame{position:relative;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#000}
+.demo-frame.site{background:#fff}
+.demo-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .link-tile{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid hsl(var(--border));border-radius:var(--radius);text-decoration:none;color:inherit;transition:background .15s,border-color .15s}
 .link-tile:hover{background:hsl(var(--accent));border-color:hsl(var(--ring)/.4)}

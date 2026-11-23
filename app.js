@@ -205,6 +205,15 @@ const LinkIcon = Object.freeze({
   GITHUB: svg('<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65S8.93 17.38 9 18v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>'),
 });
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } };
+// 유튜브 링크(watch / youtu.be / shorts / embed)에서 영상 ID를 뽑는다. 유튜브가 아니면 null.
+const youtubeId = u => {
+  try {
+    const x = new URL(u), h = x.hostname.replace(/^(www|m)\./, "");
+    const id = h === "youtu.be" ? x.pathname.split("/")[1]
+      : h === "youtube.com" ? (x.pathname === "/watch" ? x.searchParams.get("v") : x.pathname.match(/^\/(?:shorts|embed|live)\/([^/]+)/)?.[1]) : null;
+    return id && /^[\w-]{11}$/.test(id) ? id : null;
+  } catch { return null; }
+};
 function renderTeam(slug) {
   mounted = null;
   const t = TEAM_BY_SLUG.get(slug);
@@ -220,10 +229,13 @@ function renderTeam(slug) {
   const links = [[LinkIcon.OFFICIAL, L.officialTeam.replace(" ↗", ""), BASE + t.path], [LinkIcon.DEMO, L.demo, t.demoLink], [LinkIcon.PROJECT, L.project, t.projectLink], [LinkIcon.GITHUB, "GitHub", t.sourceLink]]
     .filter(([, , u]) => u).map(([icon, l, u]) => `<a class="link-tile" href="${esc(u)}" target="_blank" rel="noopener"><span class="ico">${icon}</span>
       <span class="txt"><b>${l}</b><small>${esc(hostOf(u))}</small></span><span class="go">↗</span></a>`).join("");
+  const ytId = youtubeId(t.demoLink);
+  const demo = ytId ? `<div class="card team-sec"><div class="card-h"><h2>${L.demo}</h2></div><div class="card-c"><div class="demo-frame"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" title="${esc(t.name)} ${L.demo}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div></div></div>` : "";
+  const project = t.projectEmbed ? `<div class="card team-sec"><div class="card-h"><h2>${L.project}</h2></div><div class="card-c"><div class="demo-frame site"><iframe src="${esc(t.projectLink)}" title="${esc(t.name)} ${L.project}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div></div>` : "";
   app.innerHTML = `<a class="back" href="${mission ? `/mission/${encodeURIComponent(mission.slug)}` : "/stats"}">← ${esc(missionText)}</a><h1>${esc(t.name)}</h1>
     <div class="grid">${cards}</div>
-    <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>
-    <div class="card team-sec"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>`;
+    <div class="card team-sec"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>
+    <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>${demo}${project}`;
   loadTeamIntro(slug);
 }
 // 소개 글·이미지는 팀별 JSON(data/teams/<슬러그>.json)을 이 페이지를 열 때 하나만 불러온다. 파일이 없으면 소개가 없는 팀이다.
@@ -440,6 +452,8 @@ $("lang").addEventListener("click", () => {
 const SearchKind = Object.freeze({ MISSION: "mission", REGION: "region", TEAM: "team" });
 const SEARCH_MAX = Object.freeze({ [SearchKind.MISSION]: 5, [SearchKind.REGION]: 6, [SearchKind.TEAM]: 8 });
 const MISSION_TEAMS = count(T, t => t.challenge);  // 미션 title -> 제출 팀 수 (지역은 r.submitted)
+// 이모지 이름 팀은 글자로 검색할 수 없으므로 이름 -> 검색 별칭을 둔다
+const TEAM_NAME_ALIASES = Object.freeze({ "🐱": "cat kitty kitten neko 고양이 냥이 야옹" });
 const SEARCH_INDEX = [
   // 미션 제목은 언어별로 다르므로 표시명은 현재 언어로 읽고, 검색 키에는 두 언어 제목을 모두 넣는다
   ...D.challenges.map(c => ({ kind: SearchKind.MISSION, get name() { return mText(c, "title"); }, get sub() { return L.unitTeams(n(MISSION_TEAMS.get(c.title) || 0)); }, key: Object.values(Lang).map(l => MISSION_TEXT[l][c.slug]?.title || "").concat(c.title).join(" ").toLowerCase(), href: `/mission/${encodeURIComponent(c.slug)}` })),
@@ -451,8 +465,6 @@ $("gs-kbd").textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : 
 let gsActive = 0;
 const gsItems = () => [...document.querySelectorAll("#gs-list .gs-item")];
 const gsMark = i => { const items = gsItems(); if (!items.length) return; gsActive = (i + items.length) % items.length; items.forEach((el, k) => el.classList.toggle("on", k === gsActive)); items[gsActive].scrollIntoView({ block: "nearest" }); };
-// 이모지 이름 팀은 글자로 검색할 수 없으므로 이름 -> 검색 별칭을 둔다
-const TEAM_NAME_ALIASES = Object.freeze({ "🐱": "cat kitty kitten neko 고양이 냥이 야옹" });
 function gsRender() {
   const words = $("gs-q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) { $("gs-list").innerHTML = ""; return; }

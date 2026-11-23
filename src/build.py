@@ -8,6 +8,7 @@ from stamp import stamp
 
 OVERRIDES = json.loads((Path(__file__).parent / "source_overrides.json").read_text())
 GITHUB_WEB = json.loads((Path(__file__).parent / "github_web.json").read_text())  # resolve_github_web.py 결과
+EMBEDDABLE = set(json.loads((Path(__file__).parent / "embeddable.json").read_text())) if (Path(__file__).parent / "embeddable.json").exists() else set()  # check_embeddable.py 결과
 VIRTUAL = "Virtual"
 EXTRACTED = CACHE / "extracted.json"  # extract_html.py 결과 (팀 소개 글·이미지, 챌린지 이미지)
 TEAM_DIR = ROOT / "data" / "teams"  # 팀 페이지를 열 때 하나씩 불러오는 팀별 소개 JSON
@@ -102,6 +103,7 @@ def main():
             "region": region, "country": country, "path": rel,
             "demoLink": demo, "projectLink": project,
             "sourceLink": f"https://github.com/{src}" if src else None,
+            **({"projectEmbed": True} if project in EMBEDDABLE else {}),  # iframe 으로 열리는 주소만 표시
         })
 
     extracted = json.loads(EXTRACTED.read_text()) if EXTRACTED.exists() else {"teams": {}, "challenges": {}}
