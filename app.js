@@ -444,22 +444,27 @@ const SEARCH_INDEX = [
   // 미션 제목은 언어별로 다르므로 표시명은 현재 언어로 읽고, 검색 키에는 두 언어 제목을 모두 넣는다
   ...D.challenges.map(c => ({ kind: SearchKind.MISSION, get name() { return mText(c, "title"); }, get sub() { return L.unitTeams(n(MISSION_TEAMS.get(c.title) || 0)); }, key: Object.values(Lang).map(l => MISSION_TEXT[l][c.slug]?.title || "").concat(c.title).join(" ").toLowerCase(), href: `/mission/${encodeURIComponent(c.slug)}` })),
   ...REG.map(r => ({ kind: SearchKind.REGION, name: r.name, get sub() { return `${r.country} · ${L.unitTeams(n(r.submitted))}`; }, key: `${r.name} ${r.country}`.toLowerCase(), href: `/regions/${encodeURIComponent(r.slug)}` })),
-  ...T.map(t => ({ kind: SearchKind.TEAM, name: t.name, sub: t.region, key: t.name.toLowerCase(), href: teamHref(t), team: t }))
+  ...T.map(t => ({ kind: SearchKind.TEAM, name: t.name, sub: t.region, ctx: t.region.toLowerCase(), alias: TEAM_NAME_ALIASES[t.name] || "", key: `${t.name} ${TEAM_NAME_ALIASES[t.name] || ""}`.trim().toLowerCase(), href: teamHref(t), team: t }))
 ];
 document.body.insertAdjacentHTML("beforeend", `<div id="gs" class="gs"><div class="gs-box" role="dialog" aria-modal="true"><label class="gs-in"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="gs-q" type="search" autocomplete="off" spellcheck="false"></label><ul id="gs-list" role="listbox"></ul></div></div>`);
 $("gs-kbd").textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K";
 let gsActive = 0;
 const gsItems = () => [...document.querySelectorAll("#gs-list .gs-item")];
 const gsMark = i => { const items = gsItems(); if (!items.length) return; gsActive = (i + items.length) % items.length; items.forEach((el, k) => el.classList.toggle("on", k === gsActive)); items[gsActive].scrollIntoView({ block: "nearest" }); };
+// 이모지 이름 팀은 글자로 검색할 수 없으므로 이름 -> 검색 별칭을 둔다
+const TEAM_NAME_ALIASES = Object.freeze({ "🐱": "cat kitty kitten neko 고양이 냥이 야옹" });
 function gsRender() {
-  const q = $("gs-q").value.trim().toLowerCase();
-  if (!q) { $("gs-list").innerHTML = ""; return; }
+  const words = $("gs-q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) { $("gs-list").innerHTML = ""; return; }
   const groups = [[SearchKind.MISSION, L.searchMissions], [SearchKind.REGION, L.searchRegions], [SearchKind.TEAM, L.searchTeams]].map(([kind, title]) => {
-    const hits = SEARCH_INDEX.filter(x => x.kind === kind && x.key.includes(q));
-    const starts = hits.filter(x => x.name.toLowerCase().startsWith(q));
-    return [title, [...starts, ...hits.filter(x => !starts.includes(x))].slice(0, SEARCH_MAX[kind])];
+    // 공백으로 나눈 단어가 모두 맞아야 한다 (예: "cat seoul" = 이름 cat + 지역 seoul).
+    // 팀은 이름/별칭(key)뿐 아니라 지역(ctx)으로도 찾는다 (예: "seoul" = 서울 팀 전체).
+    const hits = SEARCH_INDEX.filter(x => x.kind === kind && words.every(w => x.key.includes(w) || x.ctx?.includes(w)));
+    const aliased = hits.filter(x => x.alias);  // 별칭 팀(🐱)은 검색에 걸리기만 하면 항상 맨 위 (상한에 잘리지 않게)
+    const starts = hits.filter(x => !aliased.includes(x) && x.name.toLowerCase().startsWith(words[0]));
+    return [title, [...aliased, ...starts, ...hits.filter(x => !aliased.includes(x) && !starts.includes(x))].slice(0, SEARCH_MAX[kind]), hits.length];
   }).filter(([, items]) => items.length);
-  $("gs-list").innerHTML = groups.length ? groups.map(([title, items]) => `<li class="gs-h">${title}</li>${items.map(x => `<li class="gs-item" role="option" data-href="${esc(x.href)}">${x.team ? avatar(x.team) : ""}<span class="n">${esc(x.name)}</span><span class="s">${esc(x.sub)}</span></li>`).join("")}`).join("") : `<li class="gs-empty">${L.searchEmpty}</li>`;
+  $("gs-list").innerHTML = groups.length ? groups.map(([title, items, total]) => `<li class="gs-h">${title} (${n(total)})</li>${items.map(x => `<li class="gs-item" role="option" data-href="${esc(x.href)}">${x.team ? avatar(x.team) : ""}<span class="n">${esc(x.name)}</span><span class="s">${esc(x.sub)}</span></li>`).join("")}`).join("") : `<li class="gs-empty">${L.searchEmpty}</li>`;
   gsMark(0);
 }
 function gsToggle(open) {
