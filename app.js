@@ -27,7 +27,7 @@ const STRINGS = {
     teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
-    stats: "통계", statsLead: date => `기준일 ${date}`,
+    stats: "2026 통계", statsLead: date => `기준일 ${date}`,
     cardTotal: "전체 등록 팀", cardSubmitted: "최종 제출 팀", cardRate: pct => `제출률 ${pct}%`,
     cardPeople: "제출 팀 인원", cardAvg: avg => `팀당 평균 ${avg}명`,
     cardRegions: "지역 수", cardCountries: "참가 국가 수", cardMissions: "미션 수",
@@ -61,7 +61,7 @@ const STRINGS = {
     teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
-    stats: "Stats", statsLead: date => `As of ${date}`,
+    stats: "2026 Stats", statsLead: date => `As of ${date}`,
     cardTotal: "Registered teams", cardSubmitted: "Final submitted teams", cardRate: pct => `${pct}% submitted`,
     cardPeople: "Members on submitted teams", cardAvg: avg => `${avg} per team on average`,
     cardRegions: "Regions", cardCountries: "Participating countries", cardMissions: "Missions",
@@ -246,14 +246,13 @@ function renderStats() {
   const cards = [
     [n(D.totalTeams), L.cardTotal], [n(T.length), L.cardSubmitted, L.cardRate(Math.round(T.length / D.totalTeams * 100))],
     [n(people), L.cardPeople, L.cardAvg((people / T.length).toFixed(1))],
-    [n(byRegion.size), L.cardRegions], [n(new Set(T.map(t => t.country).filter(c => c && c !== "Anywhere in the World")).size), L.cardCountries], [n(byChallenge.size), L.cardMissions],
-    [n(T.filter(t => t.sourceLink).length), L.cardGithub]
+    [n(byRegion.size), L.cardRegions], [n(new Set(T.map(t => t.country).filter(c => c && c !== "Anywhere in the World")).size), L.cardCountries], [n(byChallenge.size), L.cardMissions]
   ].map(([v, l, s]) => `<div class="card stat"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ""}</div>`).join("");
   const bars = (rows, fmt) => { const max = Math.max(...rows.map(r => r[1]));
     return rows.map(([l, v]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${v / max * 100}%"></i></span><span class="v">${fmt(v)}</span></div>`).join(""); };
   const dist = count(T, t => t.members ?? 0);
   app.innerHTML = `<h1>${L.stats}</h1><p class="lead">${L.statsLead(D.generatedAt)}</p>
-    <div class="grid">${cards}</div>
+    <div class="grid grid3">${cards}</div>
     <div class="two">
       <div class="card"><div class="card-h"><h2>${L.distTitle}</h2><p>${L.distSub}</p></div><div class="card-c">${bars([...dist].sort((a, b) => a[0] - b[0]).map(([k, v]) => [L.unitPeople(k), v]), v => L.unitTeams(n(v)))}</div></div>
       <div class="card"><div class="card-h"><h2>${L.missionsTitle}</h2><p>${L.byMissionSub}</p></div><div class="card-c">${bars([...byChallenge].sort((a, b) => b[1] - a[1]).map(([t, v]) => [CH_BY_TITLE.has(t) ? mText(CH_BY_TITLE.get(t), "title") : t, v]), v => L.unitTeams(n(v)))}</div></div>
