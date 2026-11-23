@@ -199,3 +199,10 @@ button,summary,nav a,.pager button{touch-action:manipulation}
   h2.sec{font-size:20px}
 }
 @media(max-width:380px){.grid,.grid3{grid-template-columns:1fr}}
+
+/* mission team filter */
+.mfilter{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.mfilter input{flex:1;min-width:220px;max-width:420px}
+button.chip{height:34px;padding:0 12px;border-radius:999px;border:1px solid hsl(var(--input));background:hsl(var(--muted));color:inherit;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+button.chip:hover{background:hsl(var(--accent))}
+.rgn{cursor:pointer}.rgn:hover{text-decoration:underline}
