@@ -6,7 +6,7 @@ const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", navStats: "통계", navRegions: "지역", navAbout: "소개",
+    langToggle: "EN", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
     aboutTitle: "NASA Space Apps Challenge 소개",
     aboutBody: [
       "NASA Space Apps Challenge는 NASA가 매년 개최하는 세계 최대 규모의 국제 해커톤입니다. 누구나 팀을 이뤄 참가할 수 있으며, NASA가 공개한 우주·지구 관측 데이터를 활용해 실제 문제를 해결하는 프로젝트를 만듭니다.",
@@ -37,7 +37,7 @@ const STRINGS = {
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", navStats: "Stats", navRegions: "Regions", navAbout: "About",
+    langToggle: "한국어", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
     aboutTitle: "About NASA Space Apps Challenge",
     aboutBody: [
       "The NASA Space Apps Challenge is the largest annual international hackathon, hosted by NASA. Anyone can join a team and build projects that tackle real-world problems using the space and Earth observation data NASA makes openly available.",
@@ -69,7 +69,8 @@ const STRINGS = {
   }
 };
 const storedLang = () => { try { return localStorage.getItem(LANG_KEY); } catch { return null; } };
-let lang = Object.values(Lang).includes(storedLang()) ? storedLang() : Lang.KO;
+const browserLang = () => (navigator.language || "").toLowerCase().startsWith(Lang.KO) ? Lang.KO : Lang.EN;  // 저장된 선택이 없으면 브라우저 언어 (한국어 외에는 영어)
+let lang = Object.values(Lang).includes(storedLang()) ? storedLang() : browserLang();
 let L = STRINGS[lang];
 const $ =id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -87,6 +88,7 @@ const setView = (nav, title) => {
   document.title = `${title} · NASA Space Apps Challenge 2026`;
   document.documentElement.lang = lang;
   $("lang-label").textContent = L.langToggle;
+  $("footer").textContent = L.footer;
   document.querySelectorAll("nav a").forEach(a => { a.textContent = L[a.dataset.label]; });
   document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === nav));
 };
