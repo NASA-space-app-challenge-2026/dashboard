@@ -33,6 +33,7 @@ const STRINGS = {
     cardRegions: "지역 수", cardCountries: "참가 국가 수", cardMissions: "미션 수",
     cardGithub: "GitHub 있는 팀",
     distTitle: "팀원 수 분포", distSub: "제출 팀 기준", byMissionSub: "팀 수 많은 순",
+    teamsTitle: "팀 목록", teamsSub: (count, size) => `${count}개 팀 · ${size}개씩`,
     regionsTitle: "지역별 현황", searchPh: "지역 또는 국가 검색 (예: Seoul)",
     regionsSub: (count, size) => `${count}개 지역 · 열 제목을 누르면 정렬 · ${size}개씩`,
     unitPeople: k => `${k}명`, unitTeams: v => `${v}팀`,
@@ -66,6 +67,7 @@ const STRINGS = {
     cardRegions: "Regions", cardCountries: "Participating countries", cardMissions: "Missions",
     cardGithub: "Teams with GitHub",
     distTitle: "Team size distribution", distSub: "Submitted teams", byMissionSub: "Most teams first",
+    teamsTitle: "Teams", teamsSub: (count, size) => `${count} teams · ${size} per page`,
     regionsTitle: "Regions", searchPh: "Search region or country (e.g. Seoul)",
     regionsSub: (count, size) => `${count} regions · click a column header to sort · ${size} per page`,
     unitPeople: k => `${k} members`, unitTeams: v => `${v} teams`,
@@ -150,8 +152,9 @@ function renderMission(slug, pageParam) {
       <div class="mission-intro">${mission.image ? `<img class="mission-img" src="${esc(mission.image)}" alt="">` : ""}
         <div><p class="desc">${esc(mText(mission, "excerpt"))}</p>
         <a class="ext" href="${BASE + esc(mission.path)}" target="_blank" rel="noopener">${L.official}</a></div></div>
-      <div class="mfilter"><input id="tq" type="search" placeholder="${L.teamSearchPh}"><span id="chip"></span></div>
-      <div id="list"></div>`;
+      <div class="card"><div class="card-h" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px"><div><h2>${L.teamsTitle}</h2><p id="tsub"></p></div>
+        <div class="tsearch"><span id="chip"></span><input id="tq" type="search" placeholder="${L.teamSearchPh}"></div></div>
+        <div class="card-c" style="padding-top:12px"><div id="list"></div></div></div>`;
     $("tq").addEventListener("input", e => { mounted.q = e.target.value.trim().toLowerCase(); applyTeamFilter(); });
     $("chip").addEventListener("click", () => { mounted.region = ""; applyTeamFilter(); });
     $("list").addEventListener("click", e => {
@@ -164,12 +167,13 @@ function renderMission(slug, pageParam) {
   const rows = pageTeams.map((t, i) => `<tr>
     <td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="${teamHref(t)}">${esc(t.name)}</a></td>
     <td title="${esc(L.clickRegionHint)}"><span class="rgn" data-region="${esc(t.region)}">${esc(t.region)}</span></td><td class="num">${t.members ?? "-"}</td>
-    <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + blankRows(pageTeams.length, 8);
+    <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + (teams.length ? "" : `<tr><td class="empty-row" colspan="8">${mounted.all.length ? L.noTeamMatch : L.noTeams}</td></tr>`) + blankRows(Math.max(pageTeams.length, 1), 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
-  $("list").innerHTML = teams.length ? `${pager}<div class="mission-t"><div class="tw" style="border:0"><table>
+  $("tsub").textContent = L.teamsSub(n(teams.length), PAGE_SIZE);
+  $("list").innerHTML = `${pager}<div style="overflow-x:auto"><table>
     <colgroup><col style="width:64px"><col><col style="width:18%"><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
     <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.demo}</th><th class="num">${L.project}</th><th class="num">${L.source}</th></tr></thead>
-    <tbody>${rows}</tbody></table></div></div>` : `<div class="empty">${mounted.all.length ? L.noTeamMatch : L.noTeams}</div>`;
+    <tbody>${rows}</tbody></table></div>`;
 }
 // 지역/검색어 필터를 적용하고 1페이지부터 다시 그린다 (입력할 때마다 기록이 쌓이지 않도록 replaceState)
 function applyTeamFilter() {
@@ -177,6 +181,7 @@ function applyTeamFilter() {
   m.teams = m.all.filter(t => (!m.region || t.region === m.region) && (!m.q || `${t.name} ${t.region}`.toLowerCase().includes(m.q)));
   m.pages = Math.max(1, Math.ceil(m.teams.length / PAGE_SIZE));
   $("chip").innerHTML = m.region ? `<button class="chip" type="button" title="${L.clearRegion}">${L.region}: ${esc(m.region)} ✕</button>` : "";
+  $("tq").style.paddingLeft = m.region ? `${$("chip").offsetWidth + 14}px` : "";
   history.replaceState(null, "", `/mission/${encodeURIComponent(m.slug)}/1`);
   renderMission(m.slug, 1);
 }
