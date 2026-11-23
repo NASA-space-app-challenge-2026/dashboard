@@ -253,7 +253,10 @@ button.chip:hover{background:hsl(var(--accent))}
 .team-intro .team-img{flex:none;width:300px;max-width:40%;margin-bottom:0}
 .team-intro .desc{flex:1;min-width:0}
 @media(max-width:700px){.team-intro{flex-direction:column;gap:16px}.team-intro .team-img{max-width:100%}}
-.team-sec{margin-bottom:16px}
+.team-sec{margin-bottom:16px;padding-bottom:24px}  /* sticky 제목줄은 부모의 안쪽 여백 위까지만 내려오므로, 카드 아래 여백을 카드 쪽에 둬서 모서리 바닥까지 가지 않게 한다 */
+.team-sec>.card-c{padding-bottom:0}
+/* 팀 페이지 카드: 제목줄(제목 + 확대·번역 같은 액션)은 스크롤해도 상단 헤더 아래에 붙어 있고, 구분선으로 본문과 나뉜다 */
+.team-sec>.card-h{position:sticky;top:var(--hdr);z-index:5;padding-bottom:14px;background:var(--sticky-bg);border-bottom:1px solid hsl(var(--border));border-radius:calc(var(--radius) + 3px) calc(var(--radius) + 3px) 0 0;transition:border-radius .15s}
 .project-details{line-height:1.7}
 .project-details h2,.project-details h3,.project-details h4{margin:1.4em 0 .5em}
 .project-details :first-child{margin-top:0}
@@ -262,8 +265,10 @@ button.chip:hover{background:hsl(var(--accent))}
 .ref-list{margin:0;padding-left:20px;line-height:1.8}
 .team-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin-bottom:16px}
 .team-pair>.team-sec{margin-bottom:0;min-width:0}
-.zoom-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.zoom-h,.tr-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .zoom-btn{display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid hsl(var(--border));border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+.tr-toggle{padding:4px 10px;border:1px solid hsl(var(--border));border-radius:8px;background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:13px;cursor:pointer}
+.tr-toggle:hover:not(:disabled){background:hsl(var(--muted))}.tr-toggle:disabled{opacity:.6;cursor:progress}
 .zoom-btn:hover{background:hsl(var(--muted))}
 .zoom-btn .z-out,.zoomed .zoom-btn .z-in{display:none}.zoomed .zoom-btn .z-out{display:inline-flex}
 /* 고양이(live2d-widget)가 인라인으로 z-index:99999 를 쓰므로 그 위여야 한다 */
@@ -271,6 +276,8 @@ button.chip:hover{background:hsl(var(--accent))}
 html.zoom-lock{overflow:hidden}
 ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
 ::view-transition-group(zoom-card){animation-duration:.45s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+.team-sec>.card-h.stuck{border-radius:0}
+.zoomable.zoomed>.card-h{position:static}
 .zoomable.zoomed .card-c{flex:1;min-height:0}
 .zoomable.zoomed .demo-frame{aspect-ratio:auto;height:100%}
 .demo-frame{position:relative;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#000}

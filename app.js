@@ -30,7 +30,7 @@ const STRINGS = {
     back: "← 통계", notFound: "존재하지 않는 미션입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 미션 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", missionSearchPh: "팀 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
-    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", projectSummary: "프로젝트 요약", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", unzoom: "축소", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
+    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", projectSummary: "프로젝트 요약", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", unzoom: "축소", showTranslated: "한국어로 번역", showOriginal: "자동 번역됨 · 원문 보기", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
     stats: "2026 통계", statsLead: date => `기준일 ${date}`,
@@ -63,7 +63,7 @@ const STRINGS = {
     back: "← Stats", notFound: "Mission not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official mission page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", missionSearchPh: "Search team", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
-    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", projectSummary: "Project summary", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", unzoom: "Collapse", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
+    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", projectSummary: "Project summary", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", unzoom: "Collapse", showTranslated: "Translate to Korean", showOriginal: "Auto-translated · Show original", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
     stats: "2026 Stats", statsLead: date => `As of ${date}`,
@@ -253,11 +253,59 @@ async function loadTeamIntro(slug) {
   box.innerHTML = `<div class="team-intro">${d?.image ? `<img class="team-img" src="${esc(d.image)}" alt="${esc(TEAM_BY_SLUG.get(slug).name)}">` : ""}
     ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>`;
   // 프로젝트 탭의 글은 있는 팀에만 보인다. 요약은 데모 위(소개 카드 바로 뒤), 나머지는 맨 아래에 붙인다. details 는 build 단계에서 허용 태그만 남긴 HTML이다.
-  if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec"><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
-  if (d?.details) app.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c project-details">${d.details}</div></div>`);
+  if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
+  if (d?.details) app.insertAdjacentHTML("beforeend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c project-details">${d.details}</div></div>`);
   const refCard = (title, refs) => refs?.length && app.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${title}</h2></div><div class="card-c"><ul class="ref-list">${refs.map(([name, url]) => `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a></li>`).join("")}</ul></div></div>`);
   refCard(L.dataRefs, d?.dataRefs);
   refCard(L.projectRefs, d?.projectRefs);
+  translateCards([...app.querySelectorAll("[data-tr]")]);
+}
+
+// 한국어일 때 영어 원문(요약·상세)을 Chrome 내장 Translator API(기기 안에서 번역)로 번역한다. 지원하지 않는 브라우저에서는 원문 그대로 둔다.
+// 모델이 아직 없으면(downloadable) 내려받기에 사용자 동작이 필요하므로, 자동 대신 제목줄의 버튼을 눌렀을 때 번역한다.
+const TRANSLATE_PAIR = Object.freeze({ sourceLanguage: "en", targetLanguage: "ko" });
+const textNodes = el => {
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), out = [];
+  for (let n; (n = w.nextNode());) if (n.nodeValue.trim()) out.push(n);
+  return out;
+};
+// 번역기는 줄바꿈과 앞뒤 공백을 지우므로, 줄바꿈 단위로 쪼개 따로 번역하고 원래 구분자와 공백을 그대로 이어 붙인다.
+const translateText = async (translator, text) => (await Promise.all(text.split(/(\n+)/).map(async part => {
+  if (!part.trim()) return part;
+  const [lead, trail] = [part.match(/^\s*/)[0], part.match(/\s*$/)[0]];
+  return lead + await translator.translate(part.trim()) + trail;
+}))).join("");
+async function translateCards(cards) {
+  if (lang !== Lang.KO || !("Translator" in self) || !cards.length) return;
+  let availability;
+  try { availability = await Translator.availability(TRANSLATE_PAIR); } catch { return; }
+  if (availability === "unavailable") return;
+  let translator = null;
+  const getTranslator = async () => translator ??= await Translator.create(TRANSLATE_PAIR);
+  for (const card of cards) {
+    const nodes = textNodes(card.querySelector(".card-c")).map(node => ({ node, en: node.nodeValue, ko: null }));
+    const head = card.querySelector(".card-h"), btn = document.createElement("button");
+    btn.type = "button"; btn.className = "tr-toggle"; btn.textContent = L.showTranslated;
+    head.classList.add("tr-h"); head.append(btn);
+    let showKo = false;
+    const show = async on => {
+      btn.disabled = true;
+      try {
+        if (on) {
+          const t = await getTranslator();
+          await Promise.all(nodes.map(async e => {
+            if (e.ko !== null) return;
+            e.ko = await translateText(t, e.en);
+          }));
+        }
+      } catch (err) { console.warn("[translate] 번역 실패", err); btn.disabled = false; return; }
+      if (!card.isConnected) return;  // 번역하는 사이 다른 화면으로 이동했다
+      nodes.forEach(e => { e.node.nodeValue = on ? e.ko : e.en; });
+      showKo = on; btn.textContent = on ? L.showOriginal : L.showTranslated; btn.disabled = false;
+    };
+    btn.addEventListener("click", () => show(!showKo));
+    if (availability === "available") show(true);
+  }
 }
 
 /* ---------- 통계 ---------- */
@@ -479,6 +527,16 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") document.querySelectorAll(".zoomable.zoomed").forEach(c => setZoom(c, false));
 });
+// 제목줄이 카드 윗단에서 떨어져 헤더 아래에 붙어 있는 동안(.stuck)에는 윗모서리 둥글기를 없앤다. 카드 안에 있을 때만 카드 모서리에 맞춰 둥글다.
+let stuckFrame = 0;
+const syncStuck = () => {
+  stuckFrame = 0;
+  document.querySelectorAll(".team-sec>.card-h").forEach(h => {
+    const c = h.parentElement;
+    h.classList.toggle("stuck", h.getBoundingClientRect().top - c.getBoundingClientRect().top - c.clientTop > 1);
+  });
+};
+addEventListener("scroll", () => { stuckFrame ||= requestAnimationFrame(syncStuck); }, { passive: true });
 addEventListener("popstate", route);
 $("lang").addEventListener("click", () => {
   lang = lang === Lang.KO ? Lang.EN : Lang.KO;
