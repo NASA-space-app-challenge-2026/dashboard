@@ -213,7 +213,7 @@ function renderRegions() {
   $("regtable").innerHTML = `${pagerHtml(page, pages, rows.length, PAGE_SIZE)}<div style="overflow-x:auto"><table style="min-width:640px;table-layout:fixed">
     <colgroup><col style="width:7%"><col style="width:27%"><col style="width:23%"><col style="width:14%"><col style="width:14%"><col style="width:15%"></colgroup>
     <thead><tr><th class="num">${L.no}</th>${COLS.map(([k, l, c]) => `<th class="${c}" data-k="${k}" style="cursor:pointer">${L[l]}${sortKey === k ? (sortDir < 0 ? " ↓" : " ↑") : ""}</th>`).join("")}</tr></thead>
-    <tbody>${pageRows.map((r, i) => `<tr><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="/regions/${encodeURIComponent(r.slug)}">${esc(r.name)}</a></td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
+    <tbody>${pageRows.map((r, i) => `<tr class="go" data-href="/regions/${encodeURIComponent(r.slug)}"><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="/regions/${encodeURIComponent(r.slug)}">${esc(r.name)}</a></td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
 }
 
 /* ---------- 지역 ---------- */
@@ -310,6 +310,8 @@ const go = path => { history.pushState(null, "", path); route(); };
 document.addEventListener("click", e => {
   const a = e.target.closest("a[href^='/']");
   if (a && !a.target && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { e.preventDefault(); go(a.getAttribute("href")); return; }
+  const row = e.target.closest("tr[data-href]");
+  if (row && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { go(row.dataset.href); return; }
   const b = e.target.closest("#list button[data-p]");
   if (b && !b.disabled) go(`/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`);
 });

@@ -92,7 +92,8 @@ th{height:34px;font-size:14px;font-weight:500;color:hsl(var(--muted-foreground))
 tbody tr:hover{background:hsl(var(--muted)/.5)}
 tr:last-child td{border-bottom:0}
 td.num,th.num{text-align:center}td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
-td a.name{font-weight:600;text-decoration:none}td a.name:hover{text-decoration:underline}
+td a.name{font-weight:600;text-decoration:none}td a.name:hover,tr.go:hover a.name{text-decoration:underline}
+tr.go{cursor:pointer}
 td a.lk{display:inline-flex;align-items:center;height:24px;padding:0 10px;border:1px solid hsl(var(--input));
   border-radius:calc(var(--radius) - 2px);font-size:13px;font-weight:500;text-decoration:none}
 td a.lk:hover{background:hsl(var(--accent))}
