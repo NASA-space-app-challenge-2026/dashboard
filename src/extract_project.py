@@ -76,6 +76,14 @@ def references(raw, cs, field):
     return MD_LINK.findall(text)
 
 
+def inline_summary(raw, cs):
+    """Project 객체의 "summary" 문자열 필드. 값이 "$ID" 면 덩어리에서, 아니면 JSON 이스케이프된 본문을 그대로 읽는다."""
+    m = re.search(r'"__typename":"Project".*?"summary":"((?:[^"\\]|\\.)*)"', raw.decode())
+    if not m:
+        return ""
+    return cs.get(m[1][1:], "") if m[1].startswith("$") else json.loads(f'"{m[1]}"')
+
+
 def extract(page):
     """{summary, details, dataRefs, projectRefs} 를 돌려준다. Project Details 는 '<' 로 시작하는 가장 긴 덩어리, Summary 는 그 앞의 일반 텍스트 덩어리다."""
     raw = stream(page)
@@ -85,6 +93,6 @@ def extract(page):
         return None
     details = max(html, key=len)
     before = list(cs.values())[:list(cs.values()).index(details)]
-    summary = next((c for c in before[::-1] if len(c) > 100 and c[0] not in "<[{"), "")
+    summary = next((c for c in before[::-1] if len(c) > 100 and c[0] not in "<[{"), "") or inline_summary(raw, cs)
     return {"summary": summary.strip(), "details": sanitize(details),
             "dataRefs": references(raw, cs, "dataReferences"), "projectRefs": references(raw, cs, "projectReferences")}

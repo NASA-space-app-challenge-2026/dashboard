@@ -1,6 +1,7 @@
 """캐시(list, pages)에서 단일 데이터 파일 data/teams.js 를 생성한다."""
 import hashlib, json, re, shutil
 from collections import Counter
+from concurrent.futures import ProcessPoolExecutor
 from datetime import date
 from pathlib import Path
 from crawl import BASE, CACHE, ROOT, is_submitted, stage_challenges
@@ -13,26 +14,35 @@ EMBEDDABLE = set(json.loads((Path(__file__).parent / "embeddable.json").read_tex
 VIRTUAL = "Virtual"
 EXTRACTED = CACHE / "extracted.json"  # extract_html.py 결과 (팀 소개 글·이미지, 챌린지 이미지)
 TEAM_DIR = ROOT / "data" / "teams"  # 팀 페이지를 열 때 하나씩 불러오는 팀별 소개 JSON
-PROJECT_SLUGS = {"go24"}  # 프로젝트 탭의 Summary·Details 를 함께 담을 팀 (시험 삼아 서울 🐱 팀만)
 
 
 def slug_of(path):
     return path.strip("/").split("/")[-1]
 
 
+def project_of(slug):
+    """캐시된 팀 HTML 에서 프로젝트 탭 내용을 뽑는다 (프로세스 풀에서 호출). HTML 이 없으면 빈 딕셔너리."""
+    page = CACHE / "html" / "teams" / f"{slug}.html"
+    return (extract_project(page.read_text()) or {}) if page.exists() else {}
+
+
 def write_team_details(rows, teams):
-    """data/teams/<슬러그>.json = {description, image[, summary, details]}. 소개도 이미지도 없는 팀은 파일을 만들지 않는다."""
+    """data/teams/<슬러그>.json = {description, image[, summary, details, dataRefs, projectRefs]}. 내용이 하나도 없는 팀은 파일을 만들지 않는다."""
     shutil.rmtree(TEAM_DIR, ignore_errors=True)
     TEAM_DIR.mkdir(parents=True)
+    slugs = [slug_of(r["path"]) for r in rows if teams.get(slug_of(r["path"]))]
+    with ProcessPoolExecutor() as ex:  # 추출은 CPU 작업이라 스레드 대신 프로세스로 나눈다
+        projects = {}
+        for i, (slug, p) in enumerate(zip(slugs, ex.map(project_of, slugs, chunksize=200)), 1):
+            projects[slug] = p
+            if i % 1000 == 0 or i == len(slugs):
+                print(f"[프로젝트 추출] {i / len(slugs) * 100:5.1f}% ({i}/{len(slugs)})", flush=True)
     count = 0
-    for r in rows:
-        e = teams.get(slug_of(r["path"]))
-        d = {"description": e["description"], "image": e["image"]["url"] if e["image"] else None} if e else None
-        if d and slug_of(r["path"]) in PROJECT_SLUGS:
-            page = CACHE / "html" / "teams" / f"{slug_of(r['path'])}.html"
-            d.update(extract_project(page.read_text()) or {})
-        if d and (d["description"] or d["image"]):
-            (TEAM_DIR / f"{slug_of(r['path'])}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
+    for slug in slugs:
+        e = teams[slug]
+        d = {"description": e["description"], "image": e["image"]["url"] if e["image"] else None, **projects[slug]}
+        if d["description"] or d["image"] or d.get("summary") or d.get("details"):
+            (TEAM_DIR / f"{slug}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
             count += 1
     return count
 
