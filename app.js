@@ -4,11 +4,9 @@ const PAGE_SIZE = 20;
 const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions", ABOUT: "about" });
 const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
-const Theme = Object.freeze({ LIGHT: "light", DARK: "dark" });
-const THEME_KEY = "theme";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", themeToggle: "테마 전환", navStats: "통계", navRegions: "지역", navAbout: "소개",
+    langToggle: "EN", navStats: "통계", navRegions: "지역", navAbout: "소개",
     aboutTitle: "NASA Space Apps Challenge 소개",
     aboutBody: [
       "NASA Space Apps Challenge는 NASA가 매년 개최하는 세계 최대 규모의 국제 해커톤입니다. 누구나 팀을 이뤄 참가할 수 있으며, NASA가 공개한 우주·지구 관측 데이터를 활용해 실제 문제를 해결하는 프로젝트를 만듭니다.",
@@ -39,7 +37,7 @@ const STRINGS = {
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", themeToggle: "Toggle theme", navStats: "Stats", navRegions: "Regions", navAbout: "About",
+    langToggle: "한국어", navStats: "Stats", navRegions: "Regions", navAbout: "About",
     aboutTitle: "About NASA Space Apps Challenge",
     aboutBody: [
       "The NASA Space Apps Challenge is the largest annual international hackathon, hosted by NASA. Anyone can join a team and build projects that tackle real-world problems using the space and Earth observation data NASA makes openly available.",
@@ -73,9 +71,6 @@ const STRINGS = {
 const storedLang = () => { try { return localStorage.getItem(LANG_KEY); } catch { return null; } };
 let lang = Object.values(Lang).includes(storedLang()) ? storedLang() : Lang.KO;
 let L = STRINGS[lang];
-const storedTheme = () => { try { return localStorage.getItem(THEME_KEY); } catch { return null; } };
-let theme = Object.values(Theme).includes(storedTheme()) ? storedTheme() : Theme.LIGHT;  // 기본은 화이트 (시스템 설정은 따르지 않음)
-document.documentElement.dataset.theme = theme;
 const $ =id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const n = x => x.toLocaleString();
@@ -92,7 +87,6 @@ const setView = (nav, title) => {
   document.title = `${title} · NASA Space Apps Challenge 2026`;
   document.documentElement.lang = lang;
   $("lang-label").textContent = L.langToggle;
-  $("theme").ariaLabel = $("theme").title = L.themeToggle;
   document.querySelectorAll("nav a").forEach(a => { a.textContent = L[a.dataset.label]; });
   document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === nav));
 };
@@ -153,7 +147,7 @@ function renderMission(slug, pageParam) {
     <td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.intro, t.introLink)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`).join("") + blankRows(pageTeams.length, 8);
   const pager = pagerHtml(page, pages, teams.length, PAGE_SIZE);
   $("list").innerHTML = teams.length ? `${pager}<div class="mission-t"><div class="tw" style="border:0"><table>
-    <colgroup><col style="width:64px"><col><col style="width:18%"><col style="width:80px"><col style="width:104px"><col style="width:104px"><col style="width:104px"><col style="width:104px"></colgroup>
+    <colgroup><col style="width:64px"><col><col style="width:18%"><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
     <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th>${L.region}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.intro}</th><th class="num">${L.demo}</th><th class="num">${L.source}</th></tr></thead>
     <tbody>${rows}</tbody></table></div></div>` : `<div class="empty">${L.noTeams}</div>`;
 }
@@ -233,9 +227,25 @@ const teamRow = (t, i) => `<tr><td class="num">${i + 1}</td><td><a class="name" 
 const fillMission = d => {  // 표는 처음 펼칠 때 한 번만 그린다 (팀이 수천 개인 지역 대비)
   if (d.dataset.filled) return;
   d.dataset.filled = "1";
-  d.querySelector(".tw").innerHTML = `<table><colgroup><col style="width:64px"><col><col style="width:80px"><col style="width:104px"><col style="width:104px"><col style="width:104px"><col style="width:104px"></colgroup>
+  d.querySelector(".tw").innerHTML = `<table><colgroup><col style="width:64px"><col><col style="width:110px"><col style="width:128px"><col style="width:128px"><col style="width:128px"><col style="width:128px"></colgroup>
     <thead><tr><th class="num">${L.no}</th><th>${L.team}</th><th class="num">${L.members}</th><th class="num">${L.teamPage}</th><th class="num">${L.intro}</th><th class="num">${L.demo}</th><th class="num">${L.source}</th></tr></thead>
     <tbody>${regionTeams.get(d.dataset.title).map(teamRow).join("")}</tbody></table>`;
+};
+const ACCORDION_MS = 250;
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const setOpen = (d, open) => {  // 높이/투명도 애니메이션으로 펼치고 접는다
+  const tw = d.querySelector(".tw");
+  if (open === (d.open && !d.classList.contains("shut"))) return;
+  d._anim?.cancel();
+  d.classList.toggle("shut", !open);
+  if (open) { d.open = true; fillMission(d); }
+  if (reduceMotion.matches) { d.open = open; return; }
+  const full = tw.scrollHeight + 1;
+  tw.classList.add("anim");
+  const keys = open ? { height: ["0px", full + "px"], opacity: [0, 1] } : { height: [tw.offsetHeight + "px", "0px"], opacity: [1, 0] };
+  const a = d._anim = tw.animate(keys, { duration: ACCORDION_MS, easing: "ease" });
+  a.onfinish = () => { tw.classList.remove("anim"); d._anim = null; if (!open) d.open = false; };
+  a.oncancel = () => tw.classList.remove("anim");
 };
 let regionTeams = new Map();  // 현재 지역의 미션 title -> 팀 목록 (이름순)
 function renderRegion(name) {
@@ -263,8 +273,11 @@ function renderRegion(name) {
   app.innerHTML = `<a class="back" href="#/regions">${L.regionBack}</a><h1>${esc(region.name)}</h1><p class="lead">${esc(region.country)}</p>
     <div class="grid grid3">${cards}</div><div class="sec-h"><h2 class="sec">${L.regionMissionsTitle}</h2>${teams.length ? `<span><button class="more" data-all="1">${L.expandAll}</button><button class="more" data-all="0">${L.collapseAll}</button></span>` : ""}</div>
     ${teams.length ? missions : `<div class="empty">${L.noRegionTeams}</div>`}`;
-  app.querySelectorAll("button[data-all]").forEach(b => b.addEventListener("click", () => app.querySelectorAll("details").forEach(d => d.open = b.dataset.all === "1")));
-  app.querySelectorAll("details").forEach(d => { if (d.open) fillMission(d); d.addEventListener("toggle", () => d.open && fillMission(d)); });
+  app.querySelectorAll("button[data-all]").forEach(b => b.addEventListener("click", () => app.querySelectorAll("details").forEach(d => setOpen(d, b.dataset.all === "1"))));
+  app.querySelectorAll("details").forEach(d => {
+    if (d.open) fillMission(d);
+    d.querySelector("summary").addEventListener("click", e => { e.preventDefault(); setOpen(d, d.classList.contains("shut") || !d.open); });
+  });
 }
 
 /* ---------- 소개 ---------- */
@@ -297,11 +310,6 @@ app.addEventListener("click", e => {
   location.hash = `#/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`;
 });
 addEventListener("hashchange", route);
-$("theme").addEventListener("click", () => {
-  theme = theme === Theme.LIGHT ? Theme.DARK : Theme.LIGHT;
-  document.documentElement.dataset.theme = theme;
-  try { localStorage.setItem(THEME_KEY, theme); } catch {}
-});
 $("lang").addEventListener("click", () => {
   lang = lang === Lang.KO ? Lang.EN : Lang.KO;
   L = STRINGS[lang];
