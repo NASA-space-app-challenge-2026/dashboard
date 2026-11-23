@@ -2,8 +2,14 @@
 const BASE = "https://www.spaceappschallenge.org";
 const PAGE_SIZE = 20;
 const REPO_URL = "https://github.com/NASA-space-app-challenge-2026/dashboard";
-const GITHUB_ICON = `<svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>`;
-const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions", ABOUT: "about" });
+// 앱에 쓰인 남의 저작물과 라이선스 (푸터에 표시). 새로 쓰면 여기에 추가한다.
+const LICENSES = [
+  { name: "live2d-widget 3.1.4", by: "xiazeyu", url: "https://github.com/xiazeyu/live2d-widget.js", license: "GPL 2.0", licenseUrl: "https://www.gnu.org/licenses/old-licenses/gpl-2.0.html" },
+  { name: "Live2D Cubism 2 Core", by: "Live2D Inc.", url: "https://www.live2d.com", license: "Live2D Proprietary Software License", licenseUrl: "https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html" },
+  { name: "Hijiki (Tororo & Hijiki)", by: "Live2D Inc.", url: "https://www.live2d.com/en/learn/sample/", license: "Live2D Free Material License, Cubism Sample Data Terms", licenseUrl: "https://www.live2d.com/eula/live2d-sample-model-terms_en.html" },
+  { name: "Cat Meow Sound", by: "Josh W. Comeau", url: "https://github.com/joshwcomeau/use-sound", license: "MIT", licenseUrl: "https://opensource.org/license/mit" },
+];
+const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions", ABOUT: "about", LICENSE: "license" });
 const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const STRINGS = {
@@ -103,7 +109,7 @@ const setView = (nav, title) => {
   $("lang-label").textContent = L.langToggle;
   $("gs-open-label").textContent = L.searchLabel;
   $("gs-q").placeholder = L.gsPh;
-  $("footer").innerHTML = `${L.footer}<br><a class="gh" href="${REPO_URL}" target="_blank" rel="noopener" aria-label="GitHub">${GITHUB_ICON}</a>`;
+  $("footer").innerHTML = `${L.footer}<div class="lic"><a href="${REPO_URL}" target="_blank" rel="noopener">GitHub</a> · <a href="/license">License</a></div>`;
   document.querySelectorAll("nav a").forEach(a => { a.textContent = L[a.dataset.label]; });
   document.querySelectorAll("nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === nav));
 };
@@ -390,6 +396,13 @@ function renderAbout() {
     <div class="card notice"><div class="card-h"><h2>${L.aboutReportTitle}</h2></div><div class="card-c"><p class="desc">${L.aboutReport}</p><a class="ext" href="${REPO_URL}" target="_blank" rel="noopener">${L.repoLink}</a></div></div>`;
 }
 
+/* ---------- 라이선스 ---------- */
+function renderLicense() {
+  mounted = null;
+  setView(Nav.LICENSE, "License");
+  app.innerHTML = `<h1>License</h1>${LICENSES.map(w => `<div class="card notice"><div class="card-h"><h2><a href="${w.url}" target="_blank" rel="noopener">${esc(w.name)}</a></h2></div><div class="card-c"><p class="desc">${esc(w.by)}</p><a class="ext" href="${w.licenseUrl}" target="_blank" rel="noopener">${esc(w.license)}</a></div></div>`).join("")}`;
+}
+
 /* ---------- 라우터 ---------- */
 let lastView = "";
 function route() {
@@ -400,6 +413,7 @@ function route() {
   if (kind === "mission" && slug) renderMission(slug, parseInt(p, 10) || 1);
   else if (kind === "teams" && slug) renderTeam(slug);
   else if (kind === "about") renderAbout();
+  else if (kind === "license") renderLicense();
   else if (kind === "regions" && slug) renderRegion(slug);
   else if (kind === "regions") { mounted = null; renderRegionList(); }
   else renderStats();
