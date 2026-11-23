@@ -1,5 +1,5 @@
-// 미션 한국어 번역 (손으로 관리). 키는 data/teams.js 의 challenge slug. 없으면 원문(영어)을 쓴다.
-window.MISSIONS_KO = {
+// 챌린지 한국어 번역 (손으로 관리). 키는 data/teams.js 의 challenge slug. 없으면 원문(영어)을 쓴다.
+window.CHALLENGES_KO = {
   "nasas-discarded-equipment-storytelling": {
     title: "잊히지 않은 버려진 장비: 달과 화성에 남은 NASA 장비 이야기",
     summary: "달과 화성 등에 남은 NASA 장비의 이야기를 학생들이 쉽게 접할 수 있게 풀어내기",

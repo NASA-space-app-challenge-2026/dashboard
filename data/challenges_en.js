@@ -1,5 +1,5 @@
-// 미션 한 줄 요약 (영어, 손으로 관리). 키는 data/teams.js 의 challenge slug.
-window.MISSIONS_EN = {
+// 챌린지 한 줄 요약 (영어, 손으로 관리). 키는 data/teams.js 의 challenge slug.
+window.CHALLENGES_EN = {
   "nasas-discarded-equipment-storytelling": { summary: "Tell kids the story of NASA hardware left on the Moon, Mars and in deep space." },
   "earth-system-trend-detective": { summary: "Build a tool that visualizes Earth science variables over time and finds significant trends." },
   "junior-astronaut-mission-trainer": { summary: "Build a game where students run a Moon or Mars outpost and balance life support, power and food." },

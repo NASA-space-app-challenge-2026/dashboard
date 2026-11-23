@@ -3,10 +3,11 @@ import hashlib, json, re, shutil
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from datetime import date
+from html import unescape
 from pathlib import Path
 from crawl import BASE, CACHE, ROOT, is_submitted, stage_challenges
 from stamp import stamp
-from extract_project import extract as extract_project
+from extract_project import extract as extract_project, extract_challenge
 
 OVERRIDES = json.loads((Path(__file__).parent / "source_overrides.json").read_text())
 GITHUB_WEB = json.loads((Path(__file__).parent / "github_web.json").read_text())  # resolve_github_web.py 결과
@@ -14,6 +15,8 @@ EMBEDDABLE = set(json.loads((Path(__file__).parent / "embeddable.json").read_tex
 VIRTUAL = "Virtual"
 EXTRACTED = CACHE / "extracted.json"  # extract_html.py 결과 (팀 소개 글·이미지, 챌린지 이미지)
 TEAM_DIR = ROOT / "data" / "teams"  # 팀 페이지를 열 때 하나씩 불러오는 팀별 소개 JSON
+CHALLENGE_KO_DIR = Path(__file__).parent / "translations" / "challenges_ko"  # 손으로 번역한 챌린지 본문: <슬러그>.details.html / <슬러그>.resources.html
+CHALLENGE_DIR = ROOT / "data" / "challenges"  # 챌린지 페이지를 열 때 하나씩 불러오는 챌린지별 상세 JSON
 
 
 def slug_of(path):
@@ -43,6 +46,30 @@ def write_team_details(rows, teams):
         d = {"description": e["description"], "image": e["image"]["url"] if e["image"] else None, **projects[slug]}
         if d["description"] or d["image"] or d.get("summary") or d.get("details"):
             (TEAM_DIR / f"{slug}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
+            count += 1
+    return count
+
+
+def plain(html):
+    return " ".join(unescape(re.sub(r"<[^>]+>", "", html)).split())
+
+
+def write_challenge_details(challenges):
+    """data/challenges/<슬러그>.json = {difficulty, skills, details, resources}. 캐시된 챌린지 HTML 이 없는 챌린지은 만들지 않는다."""
+    shutil.rmtree(CHALLENGE_DIR, ignore_errors=True)
+    CHALLENGE_DIR.mkdir(parents=True)
+    count = 0
+    for c in challenges.values():
+        page = CACHE / "html" / "challenges" / f"{c['slug']}.html"
+        if page.exists():
+            d = extract_challenge(page.read_text())
+            first = re.match(r"<p>(.*?)</p>", d["details"], re.S)  # 맨 앞 문단이 요약(excerpt)과 같으면 챌린지 페이지 머리에 이미 보여 주므로 뺀다
+            if first and plain(first[1]) == plain(c["excerpt"]):
+                d["details"] = d["details"][first.end():]
+            ko = {k: (CHALLENGE_KO_DIR / f"{c['slug']}.{k}.html").read_text().strip() for k in ("details", "resources") if (CHALLENGE_KO_DIR / f"{c['slug']}.{k}.html").exists()}
+            if ko:
+                d["ko"] = ko
+            (CHALLENGE_DIR / f"{c['slug']}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
             count += 1
     return count
 
@@ -140,9 +167,10 @@ def main():
     out = ROOT / "data" / "teams.js"
     out.write_text("window.DATA = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + ";\n")
     detailed = write_team_details(rows, extracted["teams"])
+    challenges = write_challenge_details(challenges)
     missing = sum(r["members"] is None for r in rows)
     stamp()  # teams.js 가 바뀌었으니 index.html 의 해시도 갱신
-    print(f"전체 {len(teams)}팀, 제출 {len(rows)}팀, 지역 {len(data['regions'])}개, 상세 누락 {missing}, 팀별 소개 {detailed}개 → {out}")
+    print(f"전체 {len(teams)}팀, 제출 {len(rows)}팀, 지역 {len(data['regions'])}개, 상세 누락 {missing}, 팀별 소개 {detailed}개, 챌린지 상세 {challenges}개 → {out}")
 
 
 if __name__ == "__main__":

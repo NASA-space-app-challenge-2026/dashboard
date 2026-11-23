@@ -74,7 +74,7 @@ def stage_list():
 
 
 def stage_challenges(teams):
-    """미션 제목 → {slug, path, excerpt}. 팀 목록 페이지를 넘기며 모든 미션을 찾을 때까지 수집한다."""
+    """챌린지 제목 → {slug, path, excerpt}. 팀 목록 페이지를 넘기며 모든 챌린지을 찾을 때까지 수집한다."""
     path = CACHE / "challenges.json"
     if path.exists() and not REFRESH:
         return json.loads(path.read_text())

@@ -96,3 +96,42 @@ def extract(page):
     summary = next((c for c in before[::-1] if len(c) > 100 and c[0] not in "<[{"), "") or inline_summary(raw, cs)
     return {"summary": summary.strip(), "details": sanitize(details),
             "dataRefs": references(raw, cs, "dataReferences"), "projectRefs": references(raw, cs, "projectReferences")}
+
+
+YOUTUBE_IFRAME = re.compile(r'<iframe[^>]*></iframe>')
+YOUTUBE_ID = re.compile(r'\ssrc="https://www\.youtube\.com/embed/([\w-]+)')
+IFRAME_TITLE = re.compile(r'\stitle="([^"]*)"')
+
+
+def youtube_link(m):
+    vid, title = YOUTUBE_ID.search(m[0]), IFRAME_TITLE.search(m[0])
+    return f'<p><a href="https://www.youtube.com/watch?v={vid[1]}">▶ {title[1] if title else "YouTube"}</a></p>' if vid else ""
+
+
+def challenge_field(raw, cs, field):
+    """챌린지 페이지 props 의 문자열 필드(detailsContent·resourcesTabContent). 값이 "$ID" 면 덩어리에서, 아니면 JSON 이스케이프된 본문을 그대로 읽는다."""
+    m = re.search(rf'"{field}":"((?:[^"\\]|\\.)*)"', raw.decode())
+    if not m:
+        return ""
+    return cs.get(m[1][1:], "") if m[1].startswith("$") else json.loads(f'"{m[1]}"')
+
+
+def challenge_html(html):
+    """위지윅 HTML → 허용 태그만 남긴 HTML. b·i 는 strong·em 으로 바꾸고, 유튜브 iframe 은 영상 링크로 바꾼다."""
+    html = YOUTUBE_IFRAME.sub(youtube_link, html)
+    html = re.sub(r"<(/?)b(?=[\s>])", r"<\1strong", html)
+    html = re.sub(r"<(/?)i(?=[\s>])", r"<\1em", html)
+    return re.sub(r"(<p>\s*</p>)+", "", sanitize(html))
+
+
+def extract_challenge(page):
+    """{difficulty, skills, details, resources}. details 는 Details 탭, resources 는 Resources 탭 본문이다."""
+    raw = stream(page)
+    cs, text = chunks(raw), raw.decode()
+    meta = re.search(r'"categories":\[(.*?)\],"skills":(\[.*?\])', text)
+    return {
+        "difficulty": re.findall(r'"name":"([^"]+)"', meta[1]) if meta else [],
+        "skills": json.loads(meta[2]) if meta else [],
+        "details": challenge_html(challenge_field(raw, cs, "detailsContent")),
+        "resources": challenge_html(challenge_field(raw, cs, "resourcesTabContent")),
+    }
