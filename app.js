@@ -1,4 +1,4 @@
-// 해시 라우팅 SPA: #/stats (기본), #/mission/<slug>/<page>, #/regions, #/regions/<소문자-하이픈 이름>, #/about
+// History API 라우팅 SPA: /stats (기본), /mission/<slug>/<page>, /regions, /regions/<소문자-하이픈 이름>, /about
 const BASE = "https://www.spaceappschallenge.org";
 const PAGE_SIZE = 20;
 const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions", ABOUT: "about" });
@@ -119,7 +119,7 @@ function missionRows() {
   return [...D.challenges].sort((a, b) => (stat.get(b.title)?.teams || 0) - (stat.get(a.title)?.teams || 0))
     .map(c => {
       const s = stat.get(c.title) || { teams: 0, members: 0 };
-      return `<a class="mission-row" href="#/mission/${encodeURIComponent(c.slug)}">${esc(mText(c, "title"))}
+      return `<a class="mission-row" href="/mission/${encodeURIComponent(c.slug)}">${esc(mText(c, "title"))}
         <span class="badge">${L.badge(n(s.teams), n(s.members))}</span></a>`;
     }).join("");
 }
@@ -128,12 +128,12 @@ function missionRows() {
 let mounted = null;  // { slug, teams, pages }
 function renderMission(slug, pageParam) {
   const mission = D.challenges.find(c => c.slug === slug);
-  if (!mission) { mounted = null; setView(Nav.STATS, L.mission); app.innerHTML = `<a class="back" href="#/stats">${L.back}</a><div class="empty">${L.notFound}</div>`; return; }
+  if (!mission) { mounted = null; setView(Nav.STATS, L.mission); app.innerHTML = `<a class="back" href="/stats">${L.back}</a><div class="empty">${L.notFound}</div>`; return; }
   setView(Nav.STATS, mText(mission, "title"));
   if (mounted?.slug !== slug) {  // 같은 미션 안에서 페이지만 바뀔 때는 머리글을 다시 그리지 않는다
     const teams = T.filter(t => t.challenge === mission.title).sort((a, b) => a.name.localeCompare(b.name));
     mounted = { slug, teams, pages: Math.max(1, Math.ceil(teams.length / PAGE_SIZE)) };
-    app.innerHTML = `<a class="back" href="#/stats">${L.back}</a><h1>${esc(mText(mission, "title"))}</h1>
+    app.innerHTML = `<a class="back" href="/stats">${L.back}</a><h1>${esc(mText(mission, "title"))}</h1>
       <p class="lead">${L.detailLead(n(teams.length), n(teams.reduce((a, t) => a + (t.members || 0), 0)))}</p>
       <p class="desc">${esc(mText(mission, "excerpt"))}</p>
       <a class="ext" href="${BASE + esc(mission.path)}" target="_blank" rel="noopener">${L.official}</a>
@@ -211,7 +211,7 @@ function renderRegions() {
   $("regtable").innerHTML = `${pagerHtml(page, pages, rows.length, PAGE_SIZE)}<div style="overflow-x:auto"><table style="min-width:640px;table-layout:fixed">
     <colgroup><col style="width:7%"><col style="width:27%"><col style="width:23%"><col style="width:14%"><col style="width:14%"><col style="width:15%"></colgroup>
     <thead><tr><th class="num">${L.no}</th>${COLS.map(([k, l, c]) => `<th class="${c}" data-k="${k}" style="cursor:pointer">${L[l]}${sortKey === k ? (sortDir < 0 ? " ↓" : " ↑") : ""}</th>`).join("")}</tr></thead>
-    <tbody>${pageRows.map((r, i) => `<tr><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="#/regions/${encodeURIComponent(r.slug)}">${esc(r.name)}</a></td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
+    <tbody>${pageRows.map((r, i) => `<tr><td class="num">${(page - 1) * PAGE_SIZE + i + 1}</td><td><a class="name" href="/regions/${encodeURIComponent(r.slug)}">${esc(r.name)}</a></td><td>${esc(r.country)}</td><td class="r">${n(r.teams)}</td><td class="r">${n(r.submitted)}</td><td class="r">${Math.round(r.rate * 100)}%</td></tr>`).join("")}${blankRows(pageRows.length, 6)}</tbody></table></div>`;
 }
 
 /* ---------- 지역 ---------- */
@@ -251,7 +251,7 @@ let regionTeams = new Map();  // 현재 지역의 미션 title -> 팀 목록 (�
 function renderRegion(name) {
   mounted = null;
   const region = REG.find(r => r.slug === regionSlug(name));
-  if (!region) { setView(Nav.REGIONS, L.navRegions); app.innerHTML = `<a class="back" href="#/regions">${L.regionBack}</a><div class="empty">${L.regionNotFound}</div>`; return; }
+  if (!region) { setView(Nav.REGIONS, L.navRegions); app.innerHTML = `<a class="back" href="/regions">${L.regionBack}</a><div class="empty">${L.regionNotFound}</div>`; return; }
   setView(Nav.REGIONS, region.name);
   const teams = T.filter(t => t.region === region.name);
   const people = teams.reduce((a, t) => a + (t.members || 0), 0);
@@ -270,7 +270,7 @@ function renderRegion(name) {
     return `<details ${open} data-title="${esc(title)}"><summary><span class="sum-t"><span>${esc(c ? mText(c, "title") : title)}</span>${c ? `<small>${esc(mText(c, "summary") || mText(c, "excerpt"))}</small>` : ""}</span>
       ${c ? `<a class="badge badge-lk" href="${BASE + esc(c.path)}" target="_blank" rel="noopener">${L.official}</a>` : ""}<span class="badge">${L.badge(n(ts.length), n(ts.reduce((a, t) => a + (t.members || 0), 0)))}</span></summary><div class="tw"></div></details>`;
   }).join("");
-  app.innerHTML = `<a class="back" href="#/regions">${L.regionBack}</a><h1>${esc(region.name)}</h1><p class="lead">${esc(region.country)}</p>
+  app.innerHTML = `<a class="back" href="/regions">${L.regionBack}</a><h1>${esc(region.name)}</h1><p class="lead">${esc(region.country)}</p>
     <div class="grid grid3">${cards}</div><div class="sec-h"><h2 class="sec">${L.regionMissionsTitle}</h2>${teams.length ? `<span><button class="more" data-all="1">${L.expandAll}</button><button class="more" data-all="0">${L.collapseAll}</button></span>` : ""}</div>
     ${teams.length ? missions : `<div class="empty">${L.noRegionTeams}</div>`}`;
   app.querySelectorAll("button[data-all]").forEach(b => b.addEventListener("click", () => app.querySelectorAll("details").forEach(d => setOpen(d, b.dataset.all === "1"))));
@@ -293,7 +293,7 @@ function renderAbout() {
 /* ---------- 라우터 ---------- */
 let lastView = "";
 function route() {
-  const [, kind, slug, p] = location.hash.replace(/^#/, "").split("/").map(decodeURIComponent);
+  const [, kind, slug, p] = location.pathname.split("/").map(decodeURIComponent);
   const view = `${kind}/${slug}`;
   if (view !== lastView) scrollTo(0, 0);  // 다른 화면으로 갈 때만 맨 위로
   lastView = view;
@@ -303,13 +303,15 @@ function route() {
   else if (kind === "regions") { mounted = null; renderRegionList(); }
   else renderStats();
 }
-// 미션 페이지네이션 버튼: 해시만 바꾸므로 페이지가 새로고침되지 않는다
-app.addEventListener("click", e => {
+const go = path => { history.pushState(null, "", path); route(); };
+// 내부 링크(<a href="/...">)와 미션 페이지네이션 버튼: 페이지를 새로 불러오지 않고 라우팅만 한다
+document.addEventListener("click", e => {
+  const a = e.target.closest("a[href^='/']");
+  if (a && !a.target && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { e.preventDefault(); go(a.getAttribute("href")); return; }
   const b = e.target.closest("#list button[data-p]");
-  if (!b || b.disabled) return;
-  location.hash = `#/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`;
+  if (b && !b.disabled) go(`/mission/${encodeURIComponent(mounted.slug)}/${b.dataset.p}`);
 });
-addEventListener("hashchange", route);
+addEventListener("popstate", route);
 $("lang").addEventListener("click", () => {
   lang = lang === Lang.KO ? Lang.EN : Lang.KO;
   L = STRINGS[lang];
@@ -317,4 +319,7 @@ $("lang").addEventListener("click", () => {
   mounted = null;  // 머리글이 캐시되어 있으므로 다시 그린다
   route();
 });
+// 404.html 이 보낸 ?p=/경로 를 주소창의 실제 경로로 복원하고, 옛 #/경로 링크도 새 경로로 바꾼다
+const redirected = new URLSearchParams(location.search).get("p") || (location.hash.startsWith("#/") && location.hash.slice(1));
+if (redirected) history.replaceState(null, "", redirected);
 route();
