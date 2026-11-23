@@ -4,12 +4,13 @@
   if (!window.L2Dwidget) return;
   const MODEL_URL = "https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json";
   const MOBILE_MAX_SIDE = 540;  // 화면의 짧은 변 기준
-  const WIDGET_ID = "live2d-widget", CANVAS_ID = "live2dcanvas";
+  const WIDGET_ID = "live2d-widget", CANVAS_ID = "live2dcanvas", FOOTER_ID = "footer";
   const SOUND_URLS = ["/assets/cat/meow-1.mp3", "/assets/cat/meow-2.m4a", "/assets/cat/meow-3.m4a"];
   const VOLUME = 0.08;
+  const FEET_RATIO = 0.27;  // 캔버스 바닥에서 고양이 발바닥까지의 투명 여백 (캔버스 높이 대비)
   const DISPLAY = {
-    desktop: { width: 150, height: 300, hOffset: 0, vOffset: -20 },
-    mobile: { width: 80, height: 160, hOffset: -10, vOffset: -30 },
+    desktop: { width: 100, height: 200, hOffset: 0, vOffset: -40 },
+    mobile: { width: 56, height: 112, hOffset: -10, vOffset: -40 },
   };
 
   let last = -1;
@@ -23,8 +24,26 @@
     a.play().catch(() => {});
   };
 
+  // 푸터의 구분선(border-top)에 닿으면 고양이가 선에 얹혀 같이 밀려 올라간다.
+  const rideFooter = widget => {
+    const base = size.vOffset;
+    const feet = size.height * FEET_RATIO;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const foot = document.getElementById(FOOTER_ID);
+      const push = foot ? innerHeight - foot.getBoundingClientRect().top - feet : base;
+      widget.style.bottom = `${Math.max(base, push)}px`;
+    };
+    const schedule = () => { raf = raf || requestAnimationFrame(update); };
+    addEventListener("scroll", schedule, { passive: true });
+    addEventListener("resize", schedule);
+    update();
+  };
+
   const setup = widget => {
     widget.setAttribute("aria-hidden", "true");
+    rideFooter(widget);
     widget.addEventListener("pointerdown", e => {
       if (e.button !== undefined && e.button !== 0) return;
       meow();
