@@ -324,6 +324,7 @@ function syncToc() {
 
 // 한국어일 때 원문(소개·요약·상세)을 Chrome 내장 Translator API(기기 안에서 번역)로 번역한다. 소개 글은 팀마다 언어가 달라 LanguageDetector 로 원문 언어를 알아내고, 못 알아내면 영어로 본다. 지원하지 않는 브라우저에서는 원문 그대로 둔다.
 // 모델이 아직 없으면(downloadable) 내려받기에 사용자 동작이 필요하므로, 자동 대신 제목줄의 버튼을 눌렀을 때 번역한다.
+const AUTO_TRANSLATE = false;  // 실시간 번역 사용 여부. 지금은 꺼 두었다.
 const DEFAULT_SOURCE_LANG = "en";
 const detectLanguage = async text => {
   if (!("LanguageDetector" in self)) return DEFAULT_SOURCE_LANG;
@@ -344,7 +345,7 @@ const translateText = async (translator, text) => (await Promise.all(text.split(
   return lead + await translator.translate(part.trim()) + trail;
 }))).join("");
 async function translateCards(cards) {
-  if (lang !== Lang.KO || !("Translator" in self)) return;
+  if (!AUTO_TRANSLATE || lang !== Lang.KO || !("Translator" in self)) return;
   const translators = new Map();  // 원문 언어 -> 번역기
   for (const card of cards) {
     const nodes = textNodes(card.querySelector(".card-c")).map(node => ({ node, en: node.nodeValue, ko: null }));
