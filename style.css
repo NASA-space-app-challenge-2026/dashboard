@@ -157,12 +157,13 @@ footer.foot .lic{margin-top:10px;font-size:14px}footer.foot .lic a{text-decorati
 /* entrance animation */
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .top{animation:rise .5s ease-out backwards}
-#app>*{animation:rise .55s cubic-bezier(.22,1,.36,1) backwards}  /* backwards: a filled opacity animation would block backdrop-filter on descendants */
+#app>*,.team-main>*,.team-side{animation:rise .55s cubic-bezier(.22,1,.36,1) backwards}  /* backwards: a filled opacity animation would block backdrop-filter on descendants */
 #app>:nth-child(2){animation-delay:.07s}
-#app>:nth-child(3){animation-delay:.14s}
-#app>:nth-child(4){animation-delay:.21s}
-#app>:nth-child(n+5){animation-delay:.28s}
-@media (prefers-reduced-motion:reduce){.top,#app>*{animation:none}}
+#app>:nth-child(3),.team-main>:nth-child(1),.team-side{animation-delay:.14s}
+#app>:nth-child(4),.team-main>:nth-child(2){animation-delay:.21s}
+#app>:nth-child(n+5),.team-main>:nth-child(n+3){animation-delay:.28s}
+#app>.team-layout{animation:none}  /* 팀 페이지는 안쪽 카드와 옆 목차가 각각 올라온다 */
+@media (prefers-reduced-motion:reduce){.top,#app>*,.team-main>*,.team-side{animation:none}}
 
 /* bar fill animation */
 @keyframes bar-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -300,8 +301,6 @@ button.chip:hover{background:hsl(var(--accent))}
 .project-details img{display:block;max-width:100%;max-height:70vh;width:auto;height:auto;margin:12px auto;border-radius:8px}  /* 세로로 긴 이미지는 화면 높이의 70%까지만, 비율은 유지 */
 .project-details a,.ref-list a{overflow-wrap:anywhere}
 .ref-list{margin:0;padding-left:20px;line-height:1.8}
-.team-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin-bottom:16px}
-.team-pair>.team-sec{margin-bottom:0;min-width:0}
 .zoom-h,.tr-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .zoom-acts{display:flex;gap:8px}
 .zoom-btn{display:grid;place-items:center;width:32px;height:32px;padding:0;border:1px solid hsl(var(--border));border-radius:8px;background:transparent;color:inherit;cursor:pointer;text-decoration:none}
@@ -329,6 +328,22 @@ html.zoom-lock{overflow:hidden}
 .link-tile b{font-weight:600}
 .link-tile small{color:hsl(var(--muted-foreground));font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .link-tile .go{flex:none;color:hsl(var(--muted-foreground))}
+/* 팀 페이지: 넓은 화면에서는 본문 오른쪽에 목차와 링크를 고정하고, 본문의 링크 카드는 숨긴다 */
+.team-side{display:none}
+@media(min-width:1101px){
+  .team-layout{display:grid;grid-template-columns:minmax(0,1fr) 232px;gap:24px;align-items:start}
+  .team-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(var(--hdr) + 16px);max-height:calc(100vh - var(--hdr) - 32px);overflow-y:auto}
+  .team-side>*{flex:none}
+  .team-links{display:none}
+  .team-main .team-sec{scroll-margin-top:calc(var(--hdr) + 16px)}
+}
+.toc{flex-direction:column;gap:2px;padding:8px}
+.toc button{padding:6px 12px;border:0;border-radius:calc(var(--radius) - 2px);background:transparent;color:hsl(var(--muted-foreground));font:inherit;font-size:15px;font-weight:500;text-align:left;cursor:pointer}
+.toc button:hover,.toc button.on{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.side-links{display:flex;flex-direction:column;gap:4px;padding:8px}
+.side-links .link-tile{gap:8px;padding:6px 8px;font-size:15px}
+.side-links .ico{width:30px;height:30px;border-radius:8px}
+.side-links small{display:none}  /* 낮은 화면에서도 목차와 함께 한 화면에 들어오도록 주소는 빼고 한 줄로 둔다 */
 .empty-row{text-align:center;color:hsl(var(--muted-foreground))}
 .tsearch{position:relative;flex:none;width:100%;max-width:360px}
 .tsearch input{width:100%}

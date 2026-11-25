@@ -250,9 +250,10 @@ function renderTeam(slug) {
   const demo = ytId ? zoomCard(L.demo, t.demoLink, `<div class="demo-frame"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" title="${esc(t.name)} ${L.demo}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`) : "";
   const project = t.projectEmbed ? zoomCard(L.project, t.projectLink, `<div class="demo-frame site"><iframe src="${esc(t.projectLink)}" title="${esc(t.name)} ${L.project}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div>`) : "";
   app.innerHTML = `<a class="back" href="${challenge ? challengeHref(challenge.slug) : "/stats"}">← ${esc(challengeText)}</a><h1>${esc(t.name)}</h1>
-    <div class="grid">${cards}</div>
-    <div class="card team-sec"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>
-    <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>${demo || project ? `<div class="team-pair">${demo}${project}</div>` : ""}`;
+    <div class="team-layout"><div class="team-main"><div class="grid">${cards}</div>
+    <div class="card team-sec team-links"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>
+    <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>${demo}${project}</div>
+    <aside class="team-side"><nav id="toc" class="card toc"></nav><div class="card side-links">${links}</div></aside></div>`;
   loadTeamIntro(slug);
 }
 // 챌린지 상세(난이도·분야·Details·Resources)는 챌린지별 JSON(data/challenges/<슬러그>.json)을 이 페이지를 열 때 하나만 불러온다. 본문은 build 단계에서 허용 태그만 남긴 HTML이다.
@@ -286,11 +287,39 @@ async function loadTeamIntro(slug) {
     ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>${memberList(d?.members)}`;
   // 프로젝트 탭의 글은 있는 팀에만 보인다. 요약은 데모 위(소개 카드 바로 뒤), 나머지는 맨 아래에 붙인다. details 는 build 단계에서 허용 태그만 남긴 HTML이다.
   if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c prose"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
-  if (d?.details) app.insertAdjacentHTML("beforeend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c prose project-details">${d.details}</div></div>`);
-  const refCard = (title, refs) => refs?.length && app.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${title}</h2></div><div class="card-c"><ul class="ref-list">${refs.map(([name, url]) => `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a></li>`).join("")}</ul></div></div>`);
+  const main = box.closest(".team-main");
+  if (d?.details) main.insertAdjacentHTML("beforeend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c prose project-details">${d.details}</div></div>`);
+  const refCard = (title, refs) => refs?.length && main.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${title}</h2></div><div class="card-c"><ul class="ref-list">${refs.map(([name, url]) => `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a></li>`).join("")}</ul></div></div>`);
   refCard(L.dataRefs, d?.dataRefs);
   refCard(L.projectRefs, d?.projectRefs);
+  buildToc();
   translateCards([...app.querySelectorAll("[data-tr]")]);
+}
+
+// 팀 페이지 목차 (넓은 화면에서 본문 오른쪽에 고정): 본문에 실제로 있는 카드의 제목으로 만든다. 링크 카드는 목차 아래의 링크 목록이 대신한다.
+let tocItems = [];  // { card, button }
+let tocTarget = null;  // 목차로 이동 중인 카드
+const scrollToCard = card => card.scrollIntoView({ behavior: reduceMotion.matches ? "auto" : "smooth" });
+// 크기를 모르는 lazy 이미지가 이동 중에 불러와지면 목표가 밀리므로 다시 맞춘다. 사용자가 직접 조작하면 그만둔다.
+document.addEventListener("load", e => { if (tocTarget && e.target.tagName === "IMG") scrollToCard(tocTarget); }, true);
+["wheel", "touchstart", "pointerdown", "keydown"].forEach(type => addEventListener(type, () => { tocTarget = null; }, { passive: true }));
+function buildToc() {
+  tocItems = [...app.querySelectorAll(".team-main .team-sec:not(.team-links)")].map(card => {
+    const button = document.createElement("button");
+    button.type = "button"; button.textContent = card.querySelector("h2").textContent;
+    button.addEventListener("click", () => scrollToCard(tocTarget = card));
+    return { card, button };
+  });
+  $("toc").replaceChildren(...tocItems.map(i => i.button));
+  syncToc();
+}
+// 윗단이 고정 헤더 근처(scroll-margin-top)를 지난 마지막 카드를 현재 섹션으로 표시한다. 페이지 끝에서는 마지막 카드를 표시한다.
+function syncToc() {
+  if (!tocItems[0]?.card.isConnected) return;  // 팀 페이지가 아니다
+  const line = parseFloat(getComputedStyle(tocItems[0].card).scrollMarginTop) + 1;
+  const atEnd = scrollY > 0 && innerHeight + scrollY >= document.documentElement.scrollHeight - 1;
+  const current = atEnd ? tocItems.at(-1) : tocItems.findLast(i => i.card.getBoundingClientRect().top <= line) ?? tocItems[0];
+  tocItems.forEach(i => i.button.classList.toggle("on", i === current));
 }
 
 // 한국어일 때 원문(소개·요약·상세)을 Chrome 내장 Translator API(기기 안에서 번역)로 번역한다. 소개 글은 팀마다 언어가 달라 LanguageDetector 로 원문 언어를 알아내고, 못 알아내면 영어로 본다. 지원하지 않는 브라우저에서는 원문 그대로 둔다.
@@ -578,6 +607,7 @@ const syncStuck = () => {
     const c = h.parentElement;
     h.classList.toggle("stuck", h.getBoundingClientRect().top - c.getBoundingClientRect().top - c.clientTop > 1);
   });
+  syncToc();
 };
 addEventListener("scroll", () => { stuckFrame ||= requestAnimationFrame(syncStuck); }, { passive: true });
 addEventListener("popstate", route);
