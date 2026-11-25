@@ -1,10 +1,8 @@
 HOST := 127.0.0.1
 PORT ?= 8000
-URL = http://$(HOST):$(PORT)
 
-.PHONY: run
+.PHONY: dev
 
-# Opens the default browser once the server responds.
-run:
-	(curl -sf --retry 5 --retry-connrefused --retry-delay 1 -o /dev/null $(URL) && open $(URL)) & \
-	python3 -m http.server $(PORT) --bind $(HOST)
+# Serves the site, opens the browser and reloads it when files change.
+dev:
+	python3 src/dev_server.py $(HOST) $(PORT)
