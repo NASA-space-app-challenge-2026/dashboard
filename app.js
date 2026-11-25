@@ -30,7 +30,7 @@ const STRINGS = {
     back: "← 통계", notFound: "존재하지 않는 챌린지입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 챌린지 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", challengeSearchPh: "팀 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
-    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", projectSummary: "프로젝트 요약", challengeDetails: "챌린지 상세", challengeResources: "리소스", difficulty: "난이도", subjects: "분야", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", openNew: "새 탭에서 열기", unzoom: "축소", showTranslated: "한국어로 번역", showOriginal: "자동 번역됨 · 원문 보기", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
+    teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", teamOwner: "팀 소유자", projectSummary: "프로젝트 요약", challengeDetails: "챌린지 상세", challengeResources: "리소스", difficulty: "난이도", subjects: "분야", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", openNew: "새 탭에서 열기", unzoom: "축소", showTranslated: "한국어로 번역", showOriginal: "자동 번역됨 · 원문 보기", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
     prev: "이전", next: "다음",
     stats: "2026 통계", statsLead: date => `기준일 ${date}`,
@@ -63,7 +63,7 @@ const STRINGS = {
     back: "← Stats", notFound: "Challenge not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official challenge page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", challengeSearchPh: "Search team", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
-    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", projectSummary: "Project summary", challengeDetails: "Challenge details", challengeResources: "Resources", difficulty: "Difficulty", subjects: "Subjects", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", openNew: "Open in new tab", unzoom: "Collapse", showTranslated: "Translate to Korean", showOriginal: "Auto-translated · Show original", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
+    teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", teamOwner: "Team Owner", projectSummary: "Project summary", challengeDetails: "Challenge details", challengeResources: "Resources", difficulty: "Difficulty", subjects: "Subjects", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", openNew: "Open in new tab", unzoom: "Collapse", showTranslated: "Translate to Korean", showOriginal: "Auto-translated · Show original", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
     prev: "Prev", next: "Next",
     stats: "2026 Stats", statsLead: date => `As of ${date}`,
@@ -273,7 +273,9 @@ async function loadChallengeDetail(slug) {
   });
   translateCards([...$("mdetail").querySelectorAll("[data-tr]")]);
 }
-// 소개 글·이미지는 팀별 JSON(data/teams/<슬러그>.json)을 이 페이지를 열 때 하나만 불러온다. 파일이 없으면 소개가 없는 팀이다.
+// 팀원 이름·국가는 고유명사라 자동 번역에서 뺀다 (translate="no")
+const memberList = members => members?.length ? `<ul class="members" translate="no">${members.map(m => `<li>${avatar({ image: m.avatar })}<div><b>${esc(m.name)}${m.owner ? `<span class="owner">${L.teamOwner}</span>` : ""}</b><small>${esc(m.country)}</small></div></li>`).join("")}</ul>` : "";
+// 소개 글·이미지·팀원은 팀별 JSON(data/teams/<슬러그>.json)을 이 페이지를 열 때 하나만 불러온다. 파일이 없으면 소개가 없는 팀이다.
 async function loadTeamIntro(slug) {
   let d = null;
   try { const r = await fetch(`/data/teams/${encodeURIComponent(slug)}.json`); if (r.ok) d = await r.json(); } catch {}
@@ -281,7 +283,7 @@ async function loadTeamIntro(slug) {
   if (!box || box.dataset.slug !== slug) return;  // 그 사이 다른 화면으로 이동했다
   if (d?.description) box.closest(".card").dataset.tr = "";  // 소개 글이 있을 때만 번역 대상
   box.innerHTML = `<div class="team-intro">${d?.image ? `<img class="team-img" src="${esc(d.image)}" alt="${esc(TEAM_BY_SLUG.get(slug).name)}">` : ""}
-    ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>`;
+    ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>${memberList(d?.members)}`;
   // 프로젝트 탭의 글은 있는 팀에만 보인다. 요약은 데모 위(소개 카드 바로 뒤), 나머지는 맨 아래에 붙인다. details 는 build 단계에서 허용 태그만 남긴 HTML이다.
   if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c prose"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
   if (d?.details) app.insertAdjacentHTML("beforeend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c prose project-details">${d.details}</div></div>`);
@@ -303,7 +305,7 @@ const detectLanguage = async text => {
 };
 const textNodes = el => {
   const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), out = [];
-  for (let n; (n = w.nextNode());) if (n.nodeValue.trim()) out.push(n);
+  for (let n; (n = w.nextNode());) if (n.nodeValue.trim() && !n.parentElement.closest("[translate=no]")) out.push(n);
   return out;
 };
 // 번역기는 줄바꿈과 앞뒤 공백을 지우므로, 줄바꿈 단위로 쪼개 따로 번역하고 원래 구분자와 공백을 그대로 이어 붙인다.

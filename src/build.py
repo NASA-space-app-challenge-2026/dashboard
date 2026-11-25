@@ -7,7 +7,7 @@ from html import unescape
 from pathlib import Path
 from crawl import BASE, CACHE, ROOT, is_submitted, stage_challenges
 from stamp import stamp
-from extract_project import extract as extract_project, extract_challenge
+from extract_project import extract as extract_project, extract_challenge, extract_members
 
 OVERRIDES = json.loads((Path(__file__).parent / "source_overrides.json").read_text())
 GITHUB_WEB = json.loads((Path(__file__).parent / "github_web.json").read_text())  # resolve_github_web.py 결과
@@ -24,13 +24,16 @@ def slug_of(path):
 
 
 def project_of(slug):
-    """캐시된 팀 HTML 에서 프로젝트 탭 내용을 뽑는다 (프로세스 풀에서 호출). HTML 이 없으면 빈 딕셔너리."""
+    """캐시된 팀 HTML 에서 프로젝트 탭 내용과 팀원 목록을 뽑는다 (프로세스 풀에서 호출). HTML 이 없으면 빈 딕셔너리."""
     page = CACHE / "html" / "teams" / f"{slug}.html"
-    return (extract_project(page.read_text()) or {}) if page.exists() else {}
+    if not page.exists():
+        return {}
+    html = page.read_text()
+    return {**(extract_project(html) or {}), "members": extract_members(html)}
 
 
 def write_team_details(rows, teams):
-    """data/teams/<슬러그>.json = {description, image[, summary, details, dataRefs, projectRefs]}. 내용이 하나도 없는 팀은 파일을 만들지 않는다."""
+    """data/teams/<슬러그>.json = {description, image[, summary, details, dataRefs, projectRefs, members]}. 내용이 하나도 없는 팀은 파일을 만들지 않는다."""
     shutil.rmtree(TEAM_DIR, ignore_errors=True)
     TEAM_DIR.mkdir(parents=True)
     slugs = [slug_of(r["path"]) for r in rows if teams.get(slug_of(r["path"]))]

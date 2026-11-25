@@ -280,6 +280,14 @@ button.chip:hover{background:hsl(var(--accent))}
 .team-intro .team-img{flex:none;width:300px;max-width:40%;margin-bottom:0}
 .team-intro .desc{flex:1;min-width:0}
 @media(max-width:700px){.team-intro{flex-direction:column;gap:16px}.team-intro .team-img{max-width:100%}}
+.members{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;margin:24px 0 0;padding:24px 0 0;border-top:1px solid hsl(var(--border))}
+@media(max-width:700px){.members{grid-template-columns:1fr}}
+.members li{display:flex;align-items:flex-start;gap:12px;min-width:0}
+.members li>div{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding-top:8px;overflow-wrap:anywhere}  /* 이름이 여러 줄이어도 첫 줄 높이를 맞춘다 */
+.members small{color:hsl(var(--muted-foreground))}
+.members .owner{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid hsl(43 90% 62%/.35);border-radius:5px;background:hsl(43 90% 62%/.1);color:hsl(43 90% 70%);font-size:11px;font-weight:500;line-height:16px;vertical-align:2px;white-space:nowrap}
+.members .avatar{width:64px;height:64px}
+.members .avatar:has(img.on) svg{visibility:hidden}  /* 투명 배경 아바타 뒤로 더미가 비치지 않게 한다 */
 .team-sec{margin-bottom:16px;padding-bottom:24px}  /* sticky 제목줄은 부모의 안쪽 여백 위까지만 내려오므로, 카드 아래 여백을 카드 쪽에 둬서 모서리 바닥까지 가지 않게 한다 */
 .team-sec>.card-c{padding-bottom:0}
 /* 팀 페이지 카드: 제목줄(제목 + 확대·번역 같은 액션)은 스크롤해도 상단 헤더 아래에 붙어 있고, 구분선으로 본문과 나뉜다 */

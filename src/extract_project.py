@@ -98,6 +98,16 @@ def extract(page):
             "dataRefs": references(raw, cs, "dataReferences"), "projectRefs": references(raw, cs, "projectReferences")}
 
 
+def extract_members(page):
+    """팀 페이지의 팀원 목록 [{name, country, avatar, owner}]. 순서는 원본을 따르고, 아바타나 축소본(HEIC 원본 등)이 없으면 avatar 는 None."""
+    text = stream(page).decode()
+    team, _ = json.JSONDecoder().raw_decode(text, text.index('{"__typename":"TeamPage",'))
+    return [{"name": u["fullName"], "country": u["country"],
+             "avatar": ((u["avatar"] or {}).get("rendition") or {}).get("url"),
+             "owner": m["user"] == team["owner"]}
+            for m in team["memberships"] for u in [m["userDetails"]]]
+
+
 YOUTUBE_IFRAME = re.compile(r'<iframe[^>]*></iframe>')
 YOUTUBE_ID = re.compile(r'\ssrc="https://www\.youtube\.com/embed/([\w-]+)')
 IFRAME_TITLE = re.compile(r'\stitle="([^"]*)"')
