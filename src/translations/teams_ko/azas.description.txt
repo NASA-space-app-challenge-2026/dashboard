@@ -1,0 +1,1 @@
+AZAS(Astro-Zonal Assessment & Scheduling)는 2026 NASA Space Apps Challenge에 참가한 대한민국 인하대학교 학생 5명으로 구성된 팀입니다. 저희는 지구에서 달까지의 여정을 탐색할 수 있는 인터랙티브 플랫폼 LAMP(Lunar Access and Mission Planning)를 개발했습니다. 저희의 목표는 우주 탐사에 관심 있는 모든 사람이 달 임무 계획을 더 쉽고 직관적이며 흥미롭게 경험할 수 있도록 하는 것입니다.

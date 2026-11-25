@@ -282,13 +282,16 @@ async function loadTeamIntro(slug) {
   try { const r = await fetch(`/data/teams/${encodeURIComponent(slug)}.json`); if (r.ok) d = await r.json(); } catch {}
   const box = $("intro");
   if (!box || box.dataset.slug !== slug) return;  // 그 사이 다른 화면으로 이동했다
-  if (d?.description) box.closest(".card").dataset.tr = "";  // 소개 글이 있을 때만 번역 대상
+  // 한국어일 때 미리 번역해 둔 글이 있으면 그것을 쓴다. 원문을 보여 주는 글만 브라우저 번역 대상(data-tr)으로 표시한다.
+  const ko = (lang === Lang.KO && d?.ko) || {};
+  const text = { ...d, ...ko }, trAttr = key => ko[key] ? "" : " data-tr";
+  if (d?.description && !ko.description) box.closest(".card").dataset.tr = "";  // 소개 글이 있을 때만 번역 대상
   box.innerHTML = `<div class="team-intro">${d?.image ? `<img class="team-img" src="${esc(d.image)}" alt="${esc(TEAM_BY_SLUG.get(slug).name)}">` : ""}
-    ${d?.description ? `<p class="desc intro">${esc(d.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>${memberList(d?.members)}`;
+    ${text.description ? `<p class="desc intro">${esc(text.description)}</p>` : `<p class="no">${L.noIntro}</p>`}</div>${memberList(d?.members)}`;
   // 프로젝트 탭의 글은 있는 팀에만 보인다. 요약은 데모 위(소개 카드 바로 뒤), 나머지는 맨 아래에 붙인다. details 는 build 단계에서 허용 태그만 남긴 HTML이다.
-  if (d?.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c prose"><p class="desc intro">${esc(d.summary)}</p></div></div>`);
+  if (text.summary) box.closest(".card").insertAdjacentHTML("afterend", `<div class="card team-sec"${trAttr("summary")}><div class="card-h"><h2>${L.projectSummary}</h2></div><div class="card-c prose"><p class="desc intro">${esc(text.summary)}</p></div></div>`);
   const main = box.closest(".team-main");
-  if (d?.details) main.insertAdjacentHTML("beforeend", `<div class="card team-sec" data-tr><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c prose project-details">${d.details}</div></div>`);
+  if (text.details) main.insertAdjacentHTML("beforeend", `<div class="card team-sec"${trAttr("details")}><div class="card-h"><h2>${L.projectDetails}</h2></div><div class="card-c prose project-details">${text.details}</div></div>`);
   const refCard = (title, refs) => refs?.length && main.insertAdjacentHTML("beforeend", `<div class="card team-sec"><div class="card-h"><h2>${title}</h2></div><div class="card-c"><ul class="ref-list">${refs.map(([name, url]) => `<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(name)}</a></li>`).join("")}</ul></div></div>`);
   refCard(L.dataRefs, d?.dataRefs);
   refCard(L.projectRefs, d?.projectRefs);

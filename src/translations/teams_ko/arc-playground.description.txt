@@ -1,0 +1,7 @@
+저희는 대한민국 서울에서 온 Rust Rebels입니다.
+
+• LI JAR — AI 엔지니어 · KAIST OverEdge 창업가 Top 25. 앱, AI 통합, 데모를 총괄합니다.
+
+• Dr. Amar Prasad Gupta — KAIST 연구원 · 전 하버드 영상의학과 교수. 방사선 과학 검토를 총괄하고 HUD와 슬라이드를 점검합니다.
+
+https://super-jar.com/

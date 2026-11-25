@@ -7,7 +7,7 @@ from html import unescape
 from pathlib import Path
 from crawl import BASE, CACHE, ROOT, is_submitted, stage_challenges
 from stamp import stamp
-from extract_project import extract as extract_project, extract_challenge, extract_members
+from extract_project import extract as extract_project, extract_challenge, extract_members, sanitize
 
 OVERRIDES = json.loads((Path(__file__).parent / "source_overrides.json").read_text())
 GITHUB_WEB = json.loads((Path(__file__).parent / "github_web.json").read_text())  # resolve_github_web.py 결과
@@ -15,6 +15,8 @@ EMBEDDABLE = set(json.loads((Path(__file__).parent / "embeddable.json").read_tex
 VIRTUAL = "Virtual"
 EXTRACTED = CACHE / "extracted.json"  # extract_html.py 결과 (팀 소개 글·이미지, 챌린지 이미지)
 TEAM_DIR = ROOT / "data" / "teams"  # 팀 페이지를 열 때 하나씩 불러오는 팀별 소개 JSON
+TEAM_KO_DIR = Path(__file__).parent / "translations" / "teams_ko"  # 미리 번역해 둔 팀 소개: <슬러그>.<필드>.<확장자>
+TEAM_KO_EXT = {"description": "txt", "summary": "txt", "details": "html"}  # 번역하는 필드 -> 파일 확장자
 CHALLENGE_KO_DIR = Path(__file__).parent / "translations" / "challenges_ko"  # 손으로 번역한 챌린지 본문: <슬러그>.details.html / <슬러그>.resources.html
 CHALLENGE_DIR = ROOT / "data" / "challenges"  # 챌린지 페이지를 열 때 하나씩 불러오는 챌린지별 상세 JSON
 
@@ -32,8 +34,17 @@ def project_of(slug):
     return {**(extract_project(html) or {}), "members": extract_members(html)}
 
 
+def team_ko(slug):
+    """팀의 한국어 번역 {필드: 본문}. 번역 파일이 있는 필드만 담는다. details 는 HTML 이라 원문처럼 허용 태그만 남긴다."""
+    files = {k: TEAM_KO_DIR / f"{slug}.{k}.{ext}" for k, ext in TEAM_KO_EXT.items()}
+    ko = {k: f.read_text().strip() for k, f in files.items() if f.exists()}
+    if "details" in ko:
+        ko["details"] = sanitize(ko["details"])
+    return ko
+
+
 def write_team_details(rows, teams):
-    """data/teams/<슬러그>.json = {description, image[, summary, details, dataRefs, projectRefs, members]}. 내용이 하나도 없는 팀은 파일을 만들지 않는다."""
+    """data/teams/<슬러그>.json = {description, image[, summary, details, dataRefs, projectRefs, members, ko]}. 내용이 하나도 없는 팀은 파일을 만들지 않는다."""
     shutil.rmtree(TEAM_DIR, ignore_errors=True)
     TEAM_DIR.mkdir(parents=True)
     slugs = [slug_of(r["path"]) for r in rows if teams.get(slug_of(r["path"]))]
@@ -48,6 +59,8 @@ def write_team_details(rows, teams):
         e = teams[slug]
         d = {"description": e["description"], "image": e["image"]["url"] if e["image"] else None, **projects[slug]}
         if d["description"] or d["image"] or d.get("summary") or d.get("details"):
+            if ko := team_ko(slug):
+                d["ko"] = ko
             (TEAM_DIR / f"{slug}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
             count += 1
     return count
