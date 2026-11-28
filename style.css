@@ -37,6 +37,7 @@ button.lang #lang-short{display:none}
 button.lang:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
 h1{font-size:32px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
 .lead{color:hsl(var(--muted-foreground));margin:0 0 28px}
+h1.solo{margin-bottom:28px}
 
 /* card */
 .card{border:1px solid hsl(var(--border));border-radius:calc(var(--radius) + 4px);box-shadow:0 1px 2px rgb(0 0 0/.05)}
@@ -157,13 +158,13 @@ footer.foot .lic{margin-top:10px;font-size:14px}footer.foot .lic a{text-decorati
 /* entrance animation */
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .top{animation:rise .5s ease-out backwards}
-#app>*,.team-main>*,.team-side{animation:rise .55s cubic-bezier(.22,1,.36,1) backwards}  /* backwards: a filled opacity animation would block backdrop-filter on descendants */
+#app>*,.team-main>*,.team-side>*{animation:rise .55s cubic-bezier(.22,1,.36,1) backwards}  /* backwards: a filled opacity animation would block backdrop-filter on descendants */
 #app>:nth-child(2){animation-delay:.07s}
-#app>:nth-child(3),.team-main>:nth-child(1),.team-side{animation-delay:.14s}
+#app>:nth-child(3),.team-main>:nth-child(1),.team-side>*{animation-delay:.14s}
 #app>:nth-child(4),.team-main>:nth-child(2){animation-delay:.21s}
 #app>:nth-child(n+5),.team-main>:nth-child(n+3){animation-delay:.28s}
 #app>.team-layout{animation:none}  /* 팀 페이지는 안쪽 카드와 옆 목차가 각각 올라온다 */
-@media (prefers-reduced-motion:reduce){.top,#app>*,.team-main>*,.team-side{animation:none}}
+@media (prefers-reduced-motion:reduce){.top,#app>*,.team-main>*,.team-side>*{animation:none}}
 
 /* bar fill animation */
 @keyframes bar-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -220,6 +221,7 @@ button,summary,nav a,.pager button{touch-action:manipulation}
   nav a{padding:8px 10px;white-space:nowrap}
   h1{font-size:26px}
   .lead{margin-bottom:20px}
+  h1.solo{margin-bottom:20px}
   .card-h{padding:16px 16px 0}.card-c{padding:16px}
   .grid,.grid3{gap:10px;grid-auto-rows:1fr}  /* 줄마다 높이가 달라지지 않게 가장 큰 카드에 맞춘다 */
   .stat{padding:12px 14px;display:flex;flex-direction:column;min-width:0}
@@ -321,8 +323,8 @@ html.zoom-lock{overflow:hidden}
 .demo-frame.site{background:#fff}
 .demo-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.link-tile{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid hsl(var(--border));border-radius:var(--radius);text-decoration:none;color:inherit;transition:background .15s,border-color .15s}
-.link-tile:hover{background:hsl(var(--accent));border-color:hsl(var(--ring)/.4)}
+.link-tile{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius);text-decoration:none;color:inherit;transition:background .15s}  /* 이미 카드 안에 있으므로 테두리 없이 호버 배경만 둔다 */
+.link-tile:hover{background:hsl(var(--accent))}
 .link-tile .ico{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:hsl(var(--muted))}
 .link-tile .txt{display:flex;flex-direction:column;min-width:0;flex:1}
 .link-tile b{font-weight:600}
@@ -332,7 +334,9 @@ html.zoom-lock{overflow:hidden}
 .team-side{display:none}
 @media(min-width:1101px){
   .team-layout{display:grid;grid-template-columns:minmax(0,1fr) 232px;gap:24px;align-items:start}
-  .team-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(var(--hdr) + 16px);max-height:calc(100vh - var(--hdr) - 32px);overflow-y:auto}
+  .team-side{display:flex;flex-direction:column;gap:16px;position:sticky;top:calc(var(--hdr) + 16px);height:calc(100vh - var(--hdr) - 32px)}  /* 화면 높이에 맞춰 팀 이동 카드가 늘 같은 자리(아래)에 오게 한다. 스크롤은 안쪽 .side-scroll 이 맡는다 (여기서 스크롤하면 팀 이동 카드의 sticky 기준이 화면이 아니게 된다) */
+  .team-side>.side-scroll{flex:0 1 auto;min-height:0;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+  .side-scroll>*{flex:none}
   .team-side>*{flex:none}
   .team-links{display:none}
   .team-main .team-sec{scroll-margin-top:calc(var(--hdr) + 16px)}
@@ -344,6 +348,31 @@ html.zoom-lock{overflow:hidden}
 .side-links .link-tile{gap:8px;padding:6px 8px;font-size:15px}
 .side-links .ico{width:30px;height:30px;border-radius:8px}
 .side-links small{display:none}  /* 낮은 화면에서도 목차와 함께 한 화면에 들어오도록 주소는 빼고 한 줄로 둔다 */
+/* 팀 이동 (이전 팀 · 목록 · 다음 팀): 넓은 화면은 오른쪽 열 맨 아래 카드(.side), 좁은 화면은 아래 가운데에 떠 있는 막대(.dock) */
+.team-pager{display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden;padding:0}
+.team-pager.side{margin-top:auto;position:sticky;bottom:16px;view-transition-name:team-pager-side}  /* 오른쪽 열 맨 아래에 붙고, 열이 아직 화면 아래로 이어지는 맨 위에서도 화면 바닥에서 16px 띄워 늘 보인다 */
+.team-pager.dock{view-transition-name:team-pager-dock}
+.team-side>.team-pager.kept,#app>.team-pager.dock.kept{animation:none}  /* 팀 사이를 이동할 때는 올라오는 애니메이션 대신 히어로 애니메이션으로 이어진다 */
+.pager-vt::view-transition-old(root),.pager-vt::view-transition-new(root){animation:none}
+.pager-vt::view-transition-group(*){animation-duration:.35s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+.team-pager>*{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 4px;color:hsl(var(--muted-foreground));font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap;
+  transition:background-color .2s ease,color .2s ease,transform .15s ease}
+.team-pager>*+*{border-left:1px solid hsl(var(--border))}
+.team-pager a:hover{background:hsl(var(--accent));color:hsl(var(--foreground))}
+.team-pager a:active{transform:scale(.94)}
+.team-pager .off{opacity:.35;cursor:default}
+.team-pager svg{transition:transform .2s cubic-bezier(.22,1,.36,1)}
+.team-pager a.prev:hover svg{transform:translateX(-3px)}
+.team-pager a.next:hover svg{transform:translateX(3px)}
+.team-pager a.list:hover svg{transform:scale(1.12)}
+.team-pager.dock{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40;width:min(360px,calc(100vw - 32px));transform:translateX(-50%);
+  border:1px solid hsl(var(--border));border-radius:calc(var(--radius) + 8px);background:var(--glass);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 8px 32px rgb(0 0 0/.45);
+  transition:transform .3s cubic-bezier(.22,1,.36,1),opacity .3s ease}
+#app>.team-pager.dock{animation:dock-in .5s cubic-bezier(.22,1,.36,1) .3s backwards}
+.team-pager.dock.hide{transform:translate(-50%,calc(100% + 24px));opacity:0;pointer-events:none}
+@keyframes dock-in{from{opacity:0;transform:translate(-50%,calc(100% + 24px))}to{opacity:1;transform:translateX(-50%)}}
+@media(min-width:1101px){.team-pager.dock{display:none}}
+@media(prefers-reduced-motion:reduce){#app>.team-pager.dock{animation:none}.team-pager>*,.team-pager svg,.team-pager.dock{transition:none}.team-pager a:hover svg,.team-pager a:active{transform:none}}
 .empty-row{text-align:center;color:hsl(var(--muted-foreground))}
 .tsearch{position:relative;flex:none;width:100%;max-width:360px}
 .tsearch input{width:100%}

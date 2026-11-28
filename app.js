@@ -1,4 +1,4 @@
-// History API 라우팅 SPA: /stats (기본), /challenges/<slug>/<page>, /teams/<slug>, /regions, /regions/<소문자-하이픈 이름>, /about
+// History API 라우팅 SPA: /stats (기본), /challenges, /challenges/<slug>/<page>, /challenges/<slug>/teams/<팀>, /regions, /regions/<소문자-하이픈 이름>, /regions/<이름>/teams/<팀>, /teams/<팀> (예전 주소), /about
 const BASE = "https://www.spaceappschallenge.org";
 const PAGE_SIZE = 20;
 const REPO_URL = "https://github.com/NASA-space-app-challenge-2026/dashboard";
@@ -9,12 +9,12 @@ const LICENSES = [
   { name: "Hijiki (Tororo & Hijiki)", by: "Live2D Inc.", url: "https://www.live2d.com/en/learn/sample/", license: "Live2D Free Material License, Cubism Sample Data Terms", licenseUrl: "https://www.live2d.com/eula/live2d-sample-model-terms_en.html" },
   { name: "Cat Meow Sound", by: "Josh W. Comeau", url: "https://github.com/joshwcomeau/use-sound", license: "MIT", licenseUrl: "https://opensource.org/license/mit" },
 ];
-const Nav = Object.freeze({ STATS: "stats", REGIONS: "regions", ABOUT: "about", LICENSE: "license" });
+const Nav = Object.freeze({ CHALLENGES: "challenges", STATS: "stats", REGIONS: "regions", ABOUT: "about", LICENSE: "license" });
 const Lang = Object.freeze({ KO: "ko", EN: "en" });
 const LANG_KEY = "lang";
 const STRINGS = {
   [Lang.KO]: {
-    langToggle: "EN", langShort: "EN", searchLabel: "검색", gsPh: "챌린지, 팀, 지역, 국가 이름으로 검색", searchChallenges: "챌린지", searchRegions: "지역", searchTeams: "팀", searchEmpty: "검색 결과가 없습니다.", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navStats: "통계", navRegions: "지역", navAbout: "소개",
+    langToggle: "EN", langShort: "EN", searchLabel: "검색", gsPh: "챌린지, 팀, 지역, 국가 이름으로 검색", searchChallenges: "챌린지", searchRegions: "지역", searchTeams: "팀", searchEmpty: "검색 결과가 없습니다.", footer: "NASA 또는 NASA Space Apps Challenge 주최 측과 무관한 비공식 통계 페이지입니다.", navChallenges: "챌린지", navStats: "통계", navRegions: "지역", navAbout: "소개",
     aboutTitle: "NASA Space Apps Challenge 소개",
     aboutBody: [
       "NASA Space Apps Challenge는 NASA가 매년 개최하는 세계 최대 규모의 국제 해커톤입니다. 누구나 팀을 이뤄 참가할 수 있으며, NASA가 공개한 우주·지구 관측 데이터를 활용해 실제 문제를 해결하는 프로젝트를 만듭니다.",
@@ -25,15 +25,15 @@ const STRINGS = {
     aboutNotice: "이 페이지는 NASA 또는 NASA Space Apps Challenge 주최 측이 운영하는 공식 페이지가 아닙니다. 공식 사이트에 공개된 정보를 바탕으로 만든 비공식 통계 페이지이며, 정확한 최신 정보는 반드시 공식 사이트에서 확인하세요. 최종적으로 제출되지 않은 팀 정보는 통계에서 제외했습니다.",
     aboutReportTitle: "정보 수정 제안",
     aboutReport: "잘못되었거나 누락된 정보를 발견하셨다면 아래 GitHub 저장소에 이슈 또는 PR로 알려주세요. 확인 후 반영하겠습니다.", repoLink: "GitHub 저장소 ↗",
-    challengesTitle: "챌린지별 제출 팀", challengeListTitle: "챌린지 목록", challenge: "챌린지",
+    challengesTitle: "챌린지별 제출 팀", challenge: "챌린지",
     badge: (teams, members) => `${teams}팀 · ${members}명`,
-    back: "← 통계", notFound: "존재하지 않는 챌린지입니다.",
+    back: "← 챌린지", notFound: "존재하지 않는 챌린지입니다.",
     detailLead: (teams, members) => `제출 팀 ${teams}팀 · 총 ${members}명`,
     official: "공식 챌린지 페이지 ↗", noTeams: "제출한 팀이 없습니다.", teamSearchPh: "팀 또는 지역 검색", challengeSearchPh: "팀 검색", clearRegion: "지역 필터 해제", clickRegionHint: "눌러서 이 지역만 보기", noTeamMatch: "조건에 맞는 팀이 없습니다.",
     teamPage: "팀 소개", teamNotFound: "존재하지 않는 팀입니다.", officialTeam: "공식 팀 페이지 ↗", linksTitle: "링크", introTitle: "팀 소개 글", teamOwner: "팀 소유자", projectSummary: "프로젝트 요약", challengeDetails: "챌린지 상세", challengeResources: "리소스", difficulty: "난이도", subjects: "분야", projectDetails: "프로젝트 상세", dataRefs: "사용한 데이터", zoom: "확대", openNew: "새 탭에서 열기", unzoom: "축소", showTranslated: "한국어로 번역", showOriginal: "자동 번역됨 · 원문 보기", projectRefs: "참고 자료 · 라이브러리", noIntro: "등록된 소개 글이 없습니다.", demo: "데모", project: "프로젝트", source: "소스",
     team: "팀명", region: "지역", members: "팀원 수", country: "국가", teamsReg: "등록 팀", teamsSub: "제출 팀", rate: "제출률", no: "번호",
-    prev: "이전", next: "다음",
-    stats: "2026 통계", statsLead: date => `기준일 ${date}`,
+    prev: "이전", next: "다음", prevTeam: "이전 팀", nextTeam: "다음 팀", teamList: "목록", teamPager: "팀 이동",
+    stats: "2026 통계",
     cardTotal: "전체 등록 팀", cardSubmitted: "최종 제출 팀", cardRate: pct => `제출률 ${pct}%`,
     cardPeople: "제출 팀 인원", cardAvg: avg => `팀당 평균 ${avg}명`,
     cardRegions: "지역 수", cardCountries: "참가 국가 수", cardChallenges: "챌린지 수",
@@ -42,12 +42,12 @@ const STRINGS = {
     regionsTitle: "지역별 현황", searchPh: "지역 또는 국가 검색 (예: Seoul)",
     regionsSub: (count, size) => `${count}개 지역 · 열 제목을 누르면 정렬 · ${size}개씩`,
     unitPeople: k => `${k}명`, unitTeams: v => `${v}팀`,
-    regionBack: "← 지역 목록", regionNotFound: "존재하지 않는 지역입니다.", regionsLead: date => `기준일 ${date} · 지역을 누르면 챌린지별 제출 팀을 볼 수 있습니다`,
+    regionBack: "← 지역 목록", regionNotFound: "존재하지 않는 지역입니다.", regionsLead: (regions, countries) => `제출 팀 기준으로 ${regions}개 지역, ${countries}개 국가가 참가했습니다`, challengesLead: (challenges, teams) => `전체 ${challenges}개 챌린지에 ${teams}팀이 제출했습니다`,
     regionChallengesTitle: "챌린지별 제출 팀", expandAll: "모두 펼치기", collapseAll: "모두 접기", noRegionTeams: "이 지역에서 제출한 팀이 없습니다.",
     loadErr: "data/teams.js 를 불러오지 못했습니다. src/build.py 를 실행하세요."
   },
   [Lang.EN]: {
-    langToggle: "한국어", langShort: "KO", searchLabel: "Search", gsPh: "Search by challenge, team, region or country", searchChallenges: "Challenges", searchRegions: "Regions", searchTeams: "Teams", searchEmpty: "No results.", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navStats: "Stats", navRegions: "Regions", navAbout: "About",
+    langToggle: "한국어", langShort: "KO", searchLabel: "Search", gsPh: "Search by challenge, team, region or country", searchChallenges: "Challenges", searchRegions: "Regions", searchTeams: "Teams", searchEmpty: "No results.", footer: "Unofficial statistics page. Not affiliated with NASA or the NASA Space Apps Challenge organizers.", navChallenges: "Challenges", navStats: "Stats", navRegions: "Regions", navAbout: "About",
     aboutTitle: "About NASA Space Apps Challenge",
     aboutBody: [
       "The NASA Space Apps Challenge is the largest annual international hackathon, hosted by NASA. Anyone can join a team and build projects that tackle real-world problems using the space and Earth observation data NASA makes openly available.",
@@ -58,15 +58,15 @@ const STRINGS = {
     aboutNotice: "This is not an official page of NASA or the NASA Space Apps Challenge organizers. It is an unofficial statistics page built from information published on the official website. Please check the official website for accurate, up-to-date information. Teams that did not make a final subchallenge are excluded from these statistics.",
     aboutReportTitle: "Report a correction",
     aboutReport: "If you spot incorrect or missing information, please let us know by opening an issue or a PR on the GitHub repository below. We will review and update it.", repoLink: "GitHub repository ↗",
-    challengesTitle: "Submitted Teams by Challenge", challengeListTitle: "Challenges", challenge: "Challenge",
+    challengesTitle: "Submitted Teams by Challenge", challenge: "Challenge",
     badge: (teams, members) => `${teams} teams · ${members} members`,
-    back: "← Stats", notFound: "Challenge not found.",
+    back: "← Challenges", notFound: "Challenge not found.",
     detailLead: (teams, members) => `${teams} submitted teams · ${members} members total`,
     official: "Official challenge page ↗", noTeams: "No teams have submitted.", teamSearchPh: "Search team or region", challengeSearchPh: "Search team", clearRegion: "Clear region filter", clickRegionHint: "Click to show this region only", noTeamMatch: "No teams match.",
     teamPage: "Team page", teamNotFound: "Team not found.", officialTeam: "Official team page ↗", linksTitle: "Links", introTitle: "About the team", teamOwner: "Team Owner", projectSummary: "Project summary", challengeDetails: "Challenge details", challengeResources: "Resources", difficulty: "Difficulty", subjects: "Subjects", projectDetails: "Project details", dataRefs: "Data used", zoom: "Expand", openNew: "Open in new tab", unzoom: "Collapse", showTranslated: "Translate to Korean", showOriginal: "Auto-translated · Show original", projectRefs: "References & libraries", noIntro: "No introduction has been written.", demo: "Demo", project: "Project", source: "Source",
     team: "Team", region: "Region", members: "Members", country: "Country", teamsReg: "Registered", teamsSub: "Submitted", rate: "Rate", no: "No.",
-    prev: "Prev", next: "Next",
-    stats: "2026 Stats", statsLead: date => `As of ${date}`,
+    prev: "Prev", next: "Next", prevTeam: "Prev team", nextTeam: "Next team", teamList: "List", teamPager: "Team navigation",
+    stats: "2026 Stats",
     cardTotal: "Registered teams", cardSubmitted: "Final submitted teams", cardRate: pct => `${pct}% submitted`,
     cardPeople: "Members on submitted teams", cardAvg: avg => `${avg} per team on average`,
     cardRegions: "Regions", cardCountries: "Participating countries", cardChallenges: "Challenges",
@@ -75,7 +75,7 @@ const STRINGS = {
     regionsTitle: "Regions", searchPh: "Search region or country (e.g. Seoul)",
     regionsSub: (count, size) => `${count} regions · click a column header to sort · ${size} per page`,
     unitPeople: k => `${k} members`, unitTeams: v => `${v} teams`,
-    regionBack: "← Regions", regionNotFound: "Region not found.", regionsLead: date => `As of ${date} · pick a region to see its submitted teams by challenge`,
+    regionBack: "← Regions", regionNotFound: "Region not found.", regionsLead: (regions, countries) => `By submitted teams, ${regions} regions in ${countries} countries took part`, challengesLead: (challenges, teams) => `${challenges} challenges, ${teams} submitted teams`,
     regionChallengesTitle: "Submitted Teams by Challenge", expandAll: "Expand all", collapseAll: "Collapse all", noRegionTeams: "No teams from this region have submitted.",
     loadErr: "Failed to load data/teams.js. Run src/build.py."
   }
@@ -91,7 +91,15 @@ const D = window.DATA, T = D.teams;
 const teamSlug = t => t.path.split("/").filter(Boolean).pop();  // "/2026/find-a-team/<slug>/" -> "<slug>" (경로가 유일하므로 슬러그도 유일)
 const CHALLENGES_PATH = "challenges";  // 챌린지 페이지 경로 (공식 사이트의 용어를 따른다). 예전 /mission/ 주소는 route() 에서 이 경로로 옮긴다.
 const challengeHref = (slug, page) => `/${CHALLENGES_PATH}/${encodeURIComponent(slug)}${page ? `/${page}` : ""}`;
-const teamHref = t => `/teams/${encodeURIComponent(teamSlug(t))}`;
+const TEAMS_PATH = "teams";
+// 팀 페이지는 들어온 목록을 상위 경로로 구분한다 (/challenges/<챌린지>/teams/<팀>, /regions/<지역>/teams/<팀>). 이전/다음 팀과 목록 버튼이 이 목록을 따른다.
+const TeamScope = Object.freeze({ CHALLENGE: CHALLENGES_PATH, REGION: "regions" });
+// 상위 목록을 정하지 못하면(챌린지 정보가 없는 팀) 예전 주소 /teams/<팀> 으로 둔다
+const teamHref = (t, scope = TeamScope.CHALLENGE) => {
+  const parent = scope === TeamScope.REGION ? regionSlug(t.region) : CH_BY_TITLE.get(t.challenge)?.slug;
+  const team = encodeURIComponent(teamSlug(t));
+  return parent ? `/${scope}/${encodeURIComponent(parent)}/${TEAMS_PATH}/${team}` : `/${TEAMS_PATH}/${team}`;
+};
 // 팀 프로필 원형 이미지. 이미지가 없거나 불러오는 중이면 사람 모양 더미를 보여 준다
 const avatar = t => `<span class="avatar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M0 24c0-6 5-10 12-10s12 4 12 10z"/></svg>${t.image ? `<img src="${esc(t.image)}" alt="" width="28" height="28" loading="lazy" decoding="async">` : ""}</span>`;
 // 이미지는 더미 위에 겹쳐 두고, 다 불러온 뒤에 서서히 나타나게 한다 (load 이벤트는 버블링되지 않아 캡처 단계에서 받는다)
@@ -140,7 +148,7 @@ const pagerButtons = (page, pages) => `<button data-p="${page - 1}" ${page === 1
 const scrollToTop = el => { if (el.getBoundingClientRect().top < 0) el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); };
 const pagerHtml = (page, pages) => `<div class="pager">${pagerButtons(page, pages)}</div>`;
 
-/* ---------- 챌린지 목록 (통계 탭에 포함) ---------- */
+/* ---------- 챌린지 목록 ---------- */
 function challengeRows() {
   const stat = new Map();
   T.forEach(t => {
@@ -156,16 +164,22 @@ function challengeRows() {
     }).join("");
 }
 
+function renderChallengeList() {
+  setView(Nav.CHALLENGES, L.navChallenges);
+  app.innerHTML = `<h1>${L.navChallenges}</h1><p class="lead">${L.challengesLead(n(D.challenges.length), n(T.length))}</p>${challengeRows()}`;
+}
+
 /* ---------- 챌린지 상세 ---------- */
+const challengeTeams = title => T.filter(t => t.challenge === title).sort((a, b) => a.name.localeCompare(b.name));  // 챌린지 페이지 목록 순서 (이름순)
 let mounted = null;  // { slug, teams, pages }
 function renderChallenge(slug, pageParam) {
   const challenge = D.challenges.find(c => c.slug === slug);
-  if (!challenge) { mounted = null; setView(Nav.STATS, L.challenge); app.innerHTML = `<a class="back" href="/stats">${L.back}</a><div class="empty">${L.notFound}</div>`; return; }
-  setView(Nav.STATS, mText(challenge, "title"));
+  if (!challenge) { mounted = null; setView(Nav.CHALLENGES, L.challenge); app.innerHTML = `<a class="back" href="/${CHALLENGES_PATH}">${L.back}</a><div class="empty">${L.notFound}</div>`; return; }
+  setView(Nav.CHALLENGES, mText(challenge, "title"));
   if (mounted?.slug !== slug) {  // 같은 챌린지 안에서 페이지만 바뀔 때는 머리글을 다시 그리지 않는다
-    const teams = T.filter(t => t.challenge === challenge.title).sort((a, b) => a.name.localeCompare(b.name));
+    const teams = challengeTeams(challenge.title);
     mounted = { slug, all: teams, teams, pages: Math.max(1, Math.ceil(teams.length / PAGE_SIZE)), region: "", q: "" };
-    app.innerHTML = `<a class="back" href="/stats">${L.back}</a><h1>${esc(mText(challenge, "title"))}</h1>
+    app.innerHTML = `<a class="back" href="/${CHALLENGES_PATH}">${L.back}</a><h1>${esc(mText(challenge, "title"))}</h1>
       <p class="lead">${L.detailLead(n(teams.length), n(teams.reduce((a, t) => a + (t.members || 0), 0)))}</p>
       <div class="challenge-intro">${challenge.image ? `<img class="challenge-img" src="${esc(challenge.image)}" alt="">` : ""}
         <div><div id="mmeta" class="challenge-meta"></div><p class="desc">${esc(mText(challenge, "excerpt"))}</p>
@@ -229,12 +243,35 @@ const youtubeId = u => {
     return id && /^[\w-]{11}$/.test(id) ? id : null;
   } catch { return null; }
 };
-function renderTeam(slug) {
+const PagerIcon = Object.freeze({
+  PREV: svg('<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>'),
+  LIST: svg('<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>'),
+  NEXT: svg('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),
+});
+// 팀 페이지로 들어온 목록: { scope, teams(목록 화면과 같은 순서), listHref(i): i번째 팀이 보이는 목록 주소 }. 없는 챌린지/지역이면 null.
+function teamScope(scope, parentSlug) {
+  if (scope === TeamScope.CHALLENGE) {
+    const c = D.challenges.find(c => c.slug === parentSlug);
+    return c && { scope, teams: challengeTeams(c.title), listHref: i => { const page = Math.floor(i / PAGE_SIZE) + 1; return challengeHref(c.slug, page > 1 ? page : 0); } };
+  }
+  const r = REG.find(r => r.slug === regionSlug(parentSlug));
+  return r && { scope, teams: regionGroups(r.name).flatMap(([, ts]) => ts), listHref: () => `/regions/${encodeURIComponent(r.slug)}` };
+}
+// 이전 팀 · 목록 · 다음 팀. 넓은 화면은 오른쪽 열의 맨 아래 카드(side), 좁은 화면은 화면 아래 가운데에 떠 있는 막대(dock)로 보여 준다.
+const teamPager = (ctx, i, cls) => {
+  const step = (t, icon, label, dir) => t
+    ? `<a class="${dir}" href="${teamHref(t, ctx.scope)}" title="${esc(t.name)}">${icon}<span>${label}</span></a>`
+    : `<span class="${dir} off" aria-disabled="true">${icon}<span>${label}</span></span>`;
+  return `<div class="team-pager ${cls}" role="navigation" aria-label="${L.teamPager}">${step(ctx.teams[i - 1], PagerIcon.PREV, L.prevTeam, "prev")}<a class="list" href="${ctx.listHref(i)}" title="${L.teamList}" aria-label="${L.teamList} (${n(i + 1)} / ${n(ctx.teams.length)})">${PagerIcon.LIST}<span>${n(i + 1)} / ${n(ctx.teams.length)}</span></a>${step(ctx.teams[i + 1], PagerIcon.NEXT, L.nextTeam, "next")}</div>`;
+};
+function renderTeam(slug, scope, parentSlug) {
   mounted = null;
   const t = TEAM_BY_SLUG.get(slug);
-  if (!t) { setView(Nav.STATS, L.team); app.innerHTML = `<a class="back" href="/stats">${L.back}</a><div class="empty">${L.teamNotFound}</div>`; return; }
+  const ctx = scope ? teamScope(scope, parentSlug) : null;
+  const at = ctx ? ctx.teams.indexOf(t) : -1;
+  if (!t || (scope && at < 0)) { setView(Nav.CHALLENGES, L.team); app.innerHTML = `<a class="back" href="/${CHALLENGES_PATH}">${L.back}</a><div class="empty">${L.teamNotFound}</div>`; return; }
   const challenge = CH_BY_TITLE.get(t.challenge);
-  setView(Nav.STATS, t.name);
+  setView(scope === TeamScope.REGION ? Nav.REGIONS : Nav.CHALLENGES, t.name);
   const challengeText = challenge ? mText(challenge, "title") : t.challenge;
   const regionLk = REG.some(r => r.name === t.region) ? `<a href="/regions/${encodeURIComponent(regionSlug(t.region))}">${esc(t.region)}</a>` : esc(t.region);
   const cards = [
@@ -249,11 +286,11 @@ function renderTeam(slug) {
   const zoomCard = (title, url, frame) => `<div class="card team-sec zoomable"><div class="card-h zoom-h"><h2>${title}</h2><div class="zoom-acts"><a class="zoom-btn" href="${esc(url)}" target="_blank" rel="noopener" title="${L.openNew}" aria-label="${L.openNew}">${OutIcon}</a><button type="button" class="zoom-btn" title="${L.zoom}" aria-label="${L.zoom}"><span class="z-in">${ZoomIcon.IN}</span><span class="z-out">${ZoomIcon.OUT}</span></button></div></div><div class="card-c">${frame}</div></div>`;
   const demo = ytId ? zoomCard(L.demo, t.demoLink, `<div class="demo-frame"><iframe src="https://www.youtube-nocookie.com/embed/${ytId}" title="${esc(t.name)} ${L.demo}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>`) : "";
   const project = t.projectEmbed ? zoomCard(L.project, t.projectLink, `<div class="demo-frame site"><iframe src="${esc(t.projectLink)}" title="${esc(t.name)} ${L.project}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div>`) : "";
-  app.innerHTML = `<a class="back" href="${challenge ? challengeHref(challenge.slug) : "/stats"}">← ${esc(challengeText)}</a><h1>${esc(t.name)}</h1>
+  app.innerHTML = `<a class="back" href="${challenge ? challengeHref(challenge.slug) : `/${CHALLENGES_PATH}`}">← ${esc(challengeText)}</a><h1>${esc(t.name)}</h1>
     <div class="team-layout"><div class="team-main"><div class="grid">${cards}</div>
     <div class="card team-sec team-links"><div class="card-h"><h2>${L.linksTitle}</h2></div><div class="card-c link-grid">${links}</div></div>
     <div class="card team-sec"><div class="card-h"><h2>${L.introTitle}</h2></div><div class="card-c" id="intro" data-slug="${esc(slug)}"></div></div>${demo}${project}</div>
-    <aside class="team-side"><nav id="toc" class="card toc"></nav><div class="card side-links">${links}</div></aside></div>`;
+    <aside class="team-side"><div class="side-scroll"><nav id="toc" class="card toc"></nav><div class="card side-links">${links}</div></div>${ctx ? teamPager(ctx, at, "card side") : ""}</aside></div>${ctx ? teamPager(ctx, at, "dock") : ""}`;
   loadTeamIntro(slug);
 }
 // 챌린지 상세(난이도·분야·Details·Resources)는 챌린지별 JSON(data/challenges/<슬러그>.json)을 이 페이지를 열 때 하나만 불러온다. 본문은 build 단계에서 허용 태그만 남긴 HTML이다.
@@ -387,28 +424,31 @@ async function translateCards(cards) {
 const reg = { sortKey: "submitted", sortDir: -1, page: 1, q: "" };
 const COLS = [["name", "region", ""], ["country", "country", ""], ["teams", "teamsReg", "r"], ["submitted", "teamsSub", "r"], ["rate", "rate", "r"]];
 const regionSlug = name => name.toLowerCase().trim().replace(/\s+/g, "-");  // URL용 소문자 키 (예: "Abu Dhabi" -> "abu-dhabi")
+// 국가 수: 국가가 아닌 "Anywhere in the World"는 세지 않는다
+const countryCount = list => new Set(list.map(x => x.country).filter(c => c && c !== "Anywhere in the World")).size;
+// 제출 팀 기준 지역·국가 수: 통계 카드와 지역 페이지 설명이 함께 쓴다
+const SUBMITTED_REGIONS = new Set(T.map(t => t.region)).size, SUBMITTED_COUNTRIES = countryCount(T);
 const REG = D.regions.map(r => ({ ...r, slug: regionSlug(r.name), rate: r.submitted / r.teams }));
 
 function renderStats() {
   mounted = null;
   setView(Nav.STATS, L.stats);
   const people = T.reduce((a, t) => a + (t.members || 0), 0);
-  const byChallenge = count(T, t => t.challenge), byRegion = count(T, t => t.region);
+  const byChallenge = count(T, t => t.challenge);
   const cards = [
     [n(D.totalTeams), L.cardTotal], [n(T.length), L.cardSubmitted, L.cardRate(Math.round(T.length / D.totalTeams * 100))],
     [n(people), L.cardPeople, L.cardAvg((people / T.length).toFixed(1))],
-    [n(byRegion.size), L.cardRegions], [n(new Set(T.map(t => t.country).filter(c => c && c !== "Anywhere in the World")).size), L.cardCountries], [n(byChallenge.size), L.cardChallenges]
+    [n(SUBMITTED_REGIONS), L.cardRegions], [n(SUBMITTED_COUNTRIES), L.cardCountries], [n(byChallenge.size), L.cardChallenges]
   ].map(([v, l, s]) => `<div class="card stat"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ""}</div>`).join("");
   const bars = (rows, fmt) => { const max = Math.max(...rows.map(r => r[1]));
     return rows.map(([l, v]) => `<div class="bar"><span class="l" title="${esc(l)}">${esc(l)}</span><span class="t"><i style="width:${v / max * 100}%"></i></span><span class="v">${fmt(v)}</span></div>`).join(""); };
   const dist = count(T, t => t.members ?? 0);
-  app.innerHTML = `<h1>${L.stats}</h1><p class="lead">${L.statsLead(D.generatedAt)}</p>
+  app.innerHTML = `<h1 class="solo">${L.stats}</h1>
     <div class="grid grid3">${cards}</div>
     <div class="two">
       <div class="card"><div class="card-h"><h2>${L.distTitle}</h2><p>${L.distSub}</p></div><div class="card-c">${bars([...dist].sort((a, b) => a[0] - b[0]).map(([k, v]) => [L.unitPeople(k), v]), v => L.unitTeams(n(v)))}</div></div>
       <div class="card"><div class="card-h"><h2>${L.challengesTitle}</h2><p>${L.byChallengeSub}</p></div><div class="card-c">${bars([...byChallenge].sort((a, b) => b[1] - a[1]).map(([t, v]) => [CH_BY_TITLE.has(t) ? mText(CH_BY_TITLE.get(t), "title") : t, v]), v => L.unitTeams(n(v)))}</div></div>
-    </div>
-    <h2 class="sec">${L.challengeListTitle}</h2>${challengeRows()}`;
+    </div>`;
 }
 
 // 지역 표 카드: 통계 탭과 지역 탭이 함께 쓴다
@@ -447,12 +487,12 @@ function renderRegions() {
 /* ---------- 지역 ---------- */
 function renderRegionList() {
   setView(Nav.REGIONS, L.navRegions);
-  app.innerHTML = `<h1>${L.navRegions}</h1><p class="lead">${L.regionsLead(D.generatedAt)}</p>${regionsCard()}`;
+  app.innerHTML = `<h1>${L.navRegions}</h1><p class="lead">${L.regionsLead(n(SUBMITTED_REGIONS), n(SUBMITTED_COUNTRIES))}</p>${regionsCard()}`;
   bindRegions();
 }
 
 const REGION_OPEN_MAX = 100;  // 제출 팀이 이 수 이하인 지역은 챌린지 목록을 처음부터 펼친다
-const teamRow = (t, i) => `<tr class="go" data-href="${teamHref(t)}"><td class="num">${i + 1}</td><td><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t)}">${esc(t.name)}</a></div></td>
+const teamRow = (t, i) => `<tr class="go" data-href="${teamHref(t, TeamScope.REGION)}"><td class="num">${i + 1}</td><td><div class="tname">${avatar(t)}<a class="name" href="${teamHref(t, TeamScope.REGION)}">${esc(t.name)}</a></div></td>
   <td class="num">${t.members ?? "-"}</td><td class="num">${cell(L.teamPage, BASE + t.path)}</td><td class="num">${cell(L.demo, t.demoLink)}</td><td class="num">${cell(L.project, t.projectLink)}</td><td class="num">${cell("GitHub", t.sourceLink)}</td></tr>`;
 const CHALLENGE_COLS = 7;
 const fillChallenge = (d, page = 1) => {  // 표는 처음 펼칠 때 한 번만 그리고, 이후엔 페이지/검색이 바뀔 때만 다시 그린다 (팀이 수천 개인 지역 대비)
@@ -493,24 +533,29 @@ const setOpen = (d, open) => {  // 높이/투명도 애니메이션으로 펼치
   a.oncancel = () => tw.classList.remove("anim");
 };
 let regionTeams = new Map();  // 현재 지역의 챌린지 title -> 팀 목록 (이름순)
+// 지역 페이지 목록 순서: [챌린지 title, 팀 목록(이름순)] 을 팀이 많은 챌린지부터
+const regionGroups = name => {
+  const byChallenge = new Map();
+  T.filter(t => t.region === name).forEach(t => (byChallenge.get(t.challenge) || byChallenge.set(t.challenge, []).get(t.challenge)).push(t));
+  byChallenge.forEach(ts => ts.sort((a, b) => a.name.localeCompare(b.name)));
+  return [...byChallenge].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+};
 function renderRegion(name) {
   mounted = null;
   const region = REG.find(r => r.slug === regionSlug(name));
   if (!region) { setView(Nav.REGIONS, L.navRegions); app.innerHTML = `<a class="back" href="/regions">${L.regionBack}</a><div class="empty">${L.regionNotFound}</div>`; return; }
   setView(Nav.REGIONS, region.name);
-  const teams = T.filter(t => t.region === region.name);
+  const groups = regionGroups(region.name);
+  const teams = groups.flatMap(([, ts]) => ts);
   const people = teams.reduce((a, t) => a + (t.members || 0), 0);
-  const byChallenge = new Map();
-  teams.forEach(t => (byChallenge.get(t.challenge) || byChallenge.set(t.challenge, []).get(t.challenge)).push(t));
-  byChallenge.forEach(ts => ts.sort((a, b) => a.name.localeCompare(b.name)));
-  regionTeams = byChallenge;
+  const byChallenge = regionTeams = new Map(groups);
   const cards = [
     [n(region.teams), L.cardTotal], [n(teams.length), L.cardSubmitted, L.cardRate(Math.round(region.rate * 100))],
     [n(people), L.cardPeople, teams.length ? L.cardAvg((people / teams.length).toFixed(1)) : ""],
     [n(byChallenge.size), L.cardChallenges]
   ].map(([v, l, s]) => `<div class="card stat"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ""}</div>`).join("");
   const open = teams.length <= REGION_OPEN_MAX ? "open" : "";
-  const challenges = [...byChallenge].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])).map(([title, ts]) => {
+  const challenges = groups.map(([title, ts]) => {
     const c = CH_BY_TITLE.get(title);
     return `<details ${open} data-title="${esc(title)}"><summary>${c?.image ? `<img class="challenge-thumb" src="${esc(c.image)}" alt="" loading="lazy">` : ""}<span class="sum-t"><span>${esc(c ? mText(c, "title") : title)}</span>${c ? `<small>${esc(mText(c, "summary") || mText(c, "excerpt"))}</small>` : ""}</span>
       ${c ? `<a class="badge badge-lk" href="${BASE + esc(c.path)}" target="_blank" rel="noopener">${L.official}</a>` : ""}<span class="badge">${L.badge(n(ts.length), n(ts.reduce((a, t) => a + (t.members || 0), 0)))}</span></summary><div class="tw"></div></details>`;
@@ -554,19 +599,35 @@ function renderLicense() {
 let lastView = "";
 function route() {
   syncZoomLock();  // 확대한 채 다른 화면으로 가면 카드가 사라지므로 스크롤 잠금도 푼다
-  let [, kind, slug, p] = location.pathname.split("/").map(decodeURIComponent);
+  let [, kind, slug, p, team] = location.pathname.split("/").map(decodeURIComponent);
   if (kind === "mission" && slug) { kind = CHALLENGES_PATH; history.replaceState(null, "", challengeHref(slug, p)); }  // 예전 /mission/ 주소
-  const view = `${kind}/${slug}`;
-  if (view !== lastView) scrollTo(0, 0);  // 다른 화면으로 갈 때만 맨 위로
-  lastView = view;
-  if (kind === CHALLENGES_PATH && slug) renderChallenge(slug, parseInt(p, 10) || 1);
-  else if (kind === "teams" && slug) renderTeam(slug);
-  else if (kind === "about") renderAbout();
-  else if (kind === "license") renderLicense();
-  else if (kind === "regions" && slug) renderRegion(slug);
-  else if (kind === "regions") { mounted = null; renderRegionList(); }
-  else renderStats();
+  // 들어온 목록이 없는 /teams/<팀> (예전 주소)은 그 팀의 챌린지 목록 아래 주소로 옮긴다
+  const legacyTeam = kind === TEAMS_PATH && slug && TEAM_BY_SLUG.get(slug);
+  if (legacyTeam && !teamHref(legacyTeam).startsWith(`/${TEAMS_PATH}/`)) { history.replaceState(null, "", teamHref(legacyTeam)); return route(); }
+  if (p !== TEAMS_PATH) team = "";
+  const view = `${kind}/${slug}/${team}`;
+  const toTeam = team && Object.values(TeamScope).includes(kind);
+  const show = () => {
+    if (view !== lastView) scrollTo(0, 0);  // 다른 화면으로 갈 때만 맨 위로
+    lastView = view;
+    if (toTeam) renderTeam(team, kind, slug);
+    else if (kind === CHALLENGES_PATH && slug) renderChallenge(slug, parseInt(p, 10) || 1);
+    else if (kind === CHALLENGES_PATH) { mounted = null; renderChallengeList(); }
+    else if (kind === TEAMS_PATH && slug) renderTeam(slug);
+    else if (kind === "about") renderAbout();
+    else if (kind === "license") renderLicense();
+    else if (kind === "regions" && slug) renderRegion(slug);
+    else if (kind === "regions") { mounted = null; renderRegionList(); }
+    else renderStats();
+  };
+  // 팀 페이지에서 팀 페이지로 갈 때는 팀 이동 막대가 사라졌다 다시 올라오지 않고, 히어로 애니메이션으로 제자리에서 이어서 바뀐다 (페이지 나머지는 바로 바뀐다)
+  if (!toTeam || !app.querySelector(".team-pager") || !document.startViewTransition || reduceMotion.matches) return show();
+  const root = document.documentElement;
+  root.classList.add(PAGER_VT_CLASS);
+  document.startViewTransition(() => { show(); app.querySelectorAll(".team-pager").forEach(el => el.classList.add("kept")); })
+    .finished.finally(() => root.classList.remove(PAGER_VT_CLASS));
 }
+const PAGER_VT_CLASS = "pager-vt";
 const go = path => { history.pushState(null, "", path); route(); };
 // 내부 링크(<a href="/...">)와 챌린지 페이지네이션 버튼: 페이지를 새로 불러오지 않고 라우팅만 한다
 document.addEventListener("click", e => {
@@ -614,6 +675,15 @@ const syncStuck = () => {
   syncToc();
 };
 addEventListener("scroll", () => { stuckFrame ||= requestAnimationFrame(syncStuck); }, { passive: true });
+// 좁은 화면의 팀 이동 막대: 아래로 스크롤하면 숨기고, 위로 스크롤하거나 맨 위에 오면 다시 보여 준다
+const DOCK_SCROLL_MIN = 8;  // 이만큼(px) 움직였을 때만 방향을 본다 (작은 흔들림 무시)
+let dockY = scrollY;
+addEventListener("scroll", () => {
+  const dock = app.querySelector(".team-pager.dock"), y = Math.max(scrollY, 0);
+  if (!dock || (Math.abs(y - dockY) < DOCK_SCROLL_MIN && y > 0)) return;
+  dock.classList.toggle("hide", y > dockY && y > 0);
+  dockY = y;
+}, { passive: true });
 addEventListener("popstate", route);
 $("lang").addEventListener("click", () => {
   lang = lang === Lang.KO ? Lang.EN : Lang.KO;
