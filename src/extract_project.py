@@ -76,9 +76,9 @@ def references(raw, cs, field):
     return MD_LINK.findall(text)
 
 
-def inline_summary(raw, cs):
-    """Project 객체의 "summary" 문자열 필드. 값이 "$ID" 면 덩어리에서, 아니면 JSON 이스케이프된 본문을 그대로 읽는다."""
-    m = re.search(r'"__typename":"Project".*?"summary":"((?:[^"\\]|\\.)*)"', raw.decode())
+def inline_field(raw, cs, field):
+    """Project 객체의 문자열 필드(예: summary, details). 값이 "$ID" 면 덩어리에서, 아니면 JSON 이스케이프된 본문을 그대로 읽는다."""
+    m = re.search(rf'"__typename":"Project".*?"{field}":"((?:[^"\\]|\\.)*)"', raw.decode())
     if not m:
         return ""
     return cs.get(m[1][1:], "") if m[1].startswith("$") else json.loads(f'"{m[1]}"')
@@ -89,11 +89,15 @@ def extract(page):
     raw = stream(page)
     cs = chunks(raw)
     html = [c for c in cs.values() if c.startswith("<")]
-    if not html:
-        return None
-    details = max(html, key=len)
-    before = list(cs.values())[:list(cs.values()).index(details)]
-    summary = next((c for c in before[::-1] if len(c) > 100 and c[0] not in "<[{"), "") or inline_summary(raw, cs)
+    if html:
+        details = max(html, key=len)
+        before = list(cs.values())[:list(cs.values()).index(details)]
+        summary = next((c for c in before[::-1] if len(c) > 100 and c[0] not in "<[{"), "") or inline_field(raw, cs, "summary")
+    else:  # 본문이 짧으면 덩어리로 빼지 않고 Project 객체 안에 문자열로 바로 들어 있다
+        details = inline_field(raw, cs, "details")
+        if not details:
+            return None
+        summary = inline_field(raw, cs, "summary")
     return {"summary": summary.strip(), "details": sanitize(details),
             "dataRefs": references(raw, cs, "dataReferences"), "projectRefs": references(raw, cs, "projectReferences")}
 

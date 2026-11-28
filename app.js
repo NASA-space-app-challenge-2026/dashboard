@@ -664,6 +664,15 @@ document.addEventListener("click", e => {
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") document.querySelectorAll(".zoomable.zoomed").forEach(c => setZoom(c, false));
 });
+// 팀 페이지에서 ← → 키로 이전/다음 팀으로 간다 (입력 중이거나 카드를 확대했거나 조합키를 누르면 무시)
+const PAGER_KEYS = Object.freeze({ ArrowLeft: "prev", ArrowRight: "next" });
+document.addEventListener("keydown", e => {
+  const dir = PAGER_KEYS[e.key];
+  if (!dir || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.defaultPrevented) return;
+  if (e.target.closest?.("input, textarea, select, [contenteditable]") || document.querySelector(".zoomable.zoomed")) return;
+  const a = app.querySelector(`.team-pager a.${dir}`);
+  if (a) { e.preventDefault(); go(a.getAttribute("href")); }
+});
 // 제목줄이 카드 윗단에서 떨어져 헤더 아래에 붙어 있는 동안(.stuck)에는 윗모서리 둥글기를 없앤다. 카드 안에 있을 때만 카드 모서리에 맞춰 둥글다.
 let stuckFrame = 0;
 const syncStuck = () => {
